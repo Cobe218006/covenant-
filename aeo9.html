@@ -288,8 +288,8 @@ const Store = {
     };
   },
 
-  save() { localStorage.setItem(this.KEY, JSON.stringify(this.data)); },
-  reset() { localStorage.removeItem(this.KEY); this.data = null; this.load(); },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch {} },
+  reset() { try { localStorage.removeItem(this.KEY); } catch {} this.data = null; this.load(); },
 
   // helpers
   uid() { return Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4); },
@@ -373,8 +373,8 @@ Store.visibility = (userId) => {
   Store.data.visibility[userId] ||= [];
   return Store.data.visibility[userId];
 };
-Store.getGeminiKey = () => localStorage.getItem('aeo9.geminiKey') || '';
-Store.setGeminiKey = (k) => localStorage.setItem('aeo9.geminiKey', k.trim());
+Store.getGeminiKey = () => { try { return localStorage.getItem('aeo9.geminiKey') || ''; } catch { return ''; } };
+Store.setGeminiKey = (k) => { try { localStorage.setItem('aeo9.geminiKey', k.trim()); } catch {} };
 
 // Seeded courses with real lesson content — expand by adding objects here
 const COURSES = [
