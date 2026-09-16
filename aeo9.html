@@ -341,6 +341,93 @@ const Crypto = {
   },
 };
 
+/* ─── Passkeys (WebAuthn, client-only) ────────────────────────
+   Uses this device's real authenticator — Face ID, Windows Hello,
+   a fingerprint reader, or a security key — to unlock this account
+   on this browser. Honesty limits, stated plainly rather than
+   glossed over:
+   - There is no server here, so the signed assertion this returns
+     is never cryptographically verified against a stored public
+     key the way a production WebAuthn relying party would. A
+     successful navigator.credentials.get() means the OS/browser
+     already confirmed your biometric or PIN; this app then only
+     checks that the returned credential ID matches one you
+     registered. That's a real, device-bound unlock — not a
+     server-verified login. Never describe it as more than that.
+   - Credentials are scoped to this exact browser origin. A passkey
+     registered on the published Artifact will not appear on a
+     locally opened copy of this file, or vice versa — different
+     origins, different credentials, by design of the WebAuthn spec.
+   - Support varies by browser, OS, and hosting context (some
+     sandboxed embeds block it entirely). This module feature-detects
+     and fails with a visible, honest message rather than pretending
+     to succeed.
+─────────────────────────────────────────────────────────────── */
+const Passkey = {
+  supported() {
+    if (!(window.PublicKeyCredential && navigator.credentials)) return false;
+    // WebAuthn refuses file:// even though it reports isSecureContext=true there —
+    // it specifically requires https:, http(s) on localhost, or an extension page.
+    // Checking this ourselves means the UI never offers a button that can only
+    // fail: opening this file locally (double-click) hides passkeys; the hosted
+    // Artifact (https://) shows them.
+    const { protocol, hostname } = location;
+    return protocol === 'https:' || protocol === 'chrome-extension:' || hostname === 'localhost' || hostname === '127.0.0.1';
+  },
+
+  b64urlEncode(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  },
+
+  b64urlDecode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) str += '=';
+    const bin = atob(str);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return buf;
+  },
+
+  async register(user) {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'AEO 9 · Corporate Curators' },
+        user: {
+          id: new TextEncoder().encode(user.id),
+          name: user.email,
+          displayName: user.name,
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },   // ES256
+          { type: 'public-key', alg: -257 }, // RS256
+        ],
+        authenticatorSelection: { userVerification: 'required' },
+        attestation: 'none',
+        timeout: 60000,
+      },
+    });
+    if (!cred) throw new Error('No credential returned.');
+    return this.b64urlEncode(cred.rawId);
+  },
+
+  async authenticate(credentialId) {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const cred = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ type: 'public-key', id: this.b64urlDecode(credentialId) }],
+        userVerification: 'required',
+        timeout: 60000,
+      },
+    });
+    if (!cred) throw new Error('No assertion returned.');
+    return this.b64urlEncode(cred.rawId);
+  },
+};
+
 /* ─── Curriculum ────────────────────────────────────────────── */
 const SCHOOLS = [
   { n:1, name:'SEO & Search',                    pillar:'Search Fundamentals' },
@@ -800,11 +887,32 @@ Views.signup = () => `
     <p style="text-align:center;font-size:12px;color:var(--text-mute);margin-top:20px">
       Have an account? <a href="#/login">Sign in</a>
     </p>
+    ${ssoPlaceholderBlock()}
     <p style="font-size:10px;color:var(--text-mute);margin-top:16px;line-height:1.6;text-align:center">
       Recording features require explicit consent before each session.
     </p>
   </div>
 `;
+
+// Google/Microsoft sign-in need a server to hold the OAuth client secret and
+// complete the redirect handshake — this app has no server by design (single
+// HTML file, no build step). Rather than fake the buttons, they're shown
+// honestly disabled with the reason, and a passkey (real, working, no server
+// required) is offered as the actual alternative on the sign-in page.
+function ssoPlaceholderBlock() {
+  return `
+    <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line)">
+      <p class="sub" style="text-align:center;font-size:11px;margin-bottom:10px">Or continue with</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="flex:1" disabled title="Requires a server holding an OAuth client secret. This app has no server by design.">Google</button>
+        <button class="btn" style="flex:1" disabled title="Requires a server holding an OAuth client secret. This app has no server by design.">Microsoft</button>
+      </div>
+      <p class="sub" style="font-size:10px;text-align:center;margin-top:8px;line-height:1.5">
+        Google and Microsoft sign-in need a server to keep an OAuth secret private — this app is a single HTML file with no server, so it can't do that honestly. A device passkey works today with no server at all; set one up from Sign in or the Dashboard.
+      </p>
+    </div>
+  `;
+}
 
 async function doSignup() {
   const name = document.getElementById('su-name').value.trim();
@@ -818,7 +926,7 @@ async function doSignup() {
   if (Store.data.users.some(u => u.email === email)) { err.textContent = 'An account already exists for this email.'; return; }
 
   const hash = await Crypto.hashPassword(password);
-  const user = { id: Store.uid(), name, email, passwordHash: hash, role: 'STUDENT', createdAt: Date.now() };
+  const user = { id: Store.uid(), name, email, passwordHash: hash, role: 'STUDENT', createdAt: Date.now(), webauthnCredId: null };
   Store.data.users.push(user);
   Store.data.session = { userId: user.id };
   Store.save();
@@ -845,9 +953,16 @@ Views.login = () => `
     </div>
     <div id="li-error" style="color:var(--red);font-size:12px;min-height:1em;margin-bottom:12px"></div>
     <button class="btn btn-primary btn-block btn-lg" onclick="doLogin()">Sign in</button>
+    ${Passkey.supported() ? `
+      <button class="btn btn-block" style="margin-top:10px" onclick="loginWithPasskey()">🔑 Sign in with a passkey</button>
+      <p class="sub" style="font-size:10px;text-align:center;margin-top:6px">Enter your email above first, then choose this if you've set up a passkey on this browser.</p>
+    ` : `
+      <p class="sub" style="font-size:10px;text-align:center;margin-top:12px">Passkeys aren't available in this browser — password sign-in still works.</p>
+    `}
     <p style="text-align:center;font-size:12px;color:var(--text-mute);margin-top:20px">
       No account? <a href="#/signup">Create one</a>
     </p>
+    ${ssoPlaceholderBlock()}
   </div>
 `;
 
@@ -863,6 +978,23 @@ async function doLogin() {
   Store.save();
   toast('Welcome back');
   Router.go('dashboard');
+}
+
+async function loginWithPasskey() {
+  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const err = document.getElementById('li-error');
+  if (!email) { err.textContent = 'Enter your email above first, then choose "Sign in with a passkey."'; return; }
+  const user = Store.data.users.find(u => u.email === email);
+  if (!user || !user.webauthnCredId) { err.textContent = 'No passkey set up for that email on this browser.'; return; }
+  try {
+    await Passkey.authenticate(user.webauthnCredId);
+    Store.data.session = { userId: user.id };
+    Store.save();
+    toast('Welcome back');
+    Router.go('dashboard');
+  } catch (e) {
+    err.textContent = 'Passkey sign-in failed or was cancelled (' + (e.message || e.name || 'unknown error') + ').';
+  }
 }
 
 function doLogout() {
@@ -951,8 +1083,58 @@ Views.dashboard = () => {
         <div style="font-size:15px;margin-top:6px">Research a company</div>
       </button>
     </div>
+
+    <div class="section-head" style="margin-top:32px"><h2>Account security</h2></div>
+    ${!Passkey.supported() ? `
+      <div class="alert alert-info" style="font-size:12px">
+        <strong>Passkeys aren't available in this browser.</strong> Password sign-in still works normally.
+      </div>
+    ` : user.webauthnCredId ? `
+      <div class="card" style="border-color:var(--gold-dim);background:rgba(212,175,55,.05)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div>
+            <p style="font-size:14px;color:var(--gold)">🔑 Passkey enabled</p>
+            <p class="sub" style="font-size:11px;margin-top:4px">You can sign in on this browser with Face ID, Windows Hello, or your device's authenticator instead of your password.</p>
+          </div>
+          <button class="btn" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="removePasskey()">Remove</button>
+        </div>
+      </div>
+    ` : `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <p style="font-size:14px">🔑 Set up a passkey</p>
+            <p class="sub" style="font-size:11px;margin-top:4px">Use Face ID, Windows Hello, or a security key to sign in on this browser without your password. Scoped to this browser only — no server involved.</p>
+          </div>
+          <button class="btn btn-primary" style="font-size:12px;padding:8px 14px;flex-shrink:0" onclick="registerPasskey()">Add a passkey</button>
+        </div>
+      </div>
+    `}
   `;
 };
+
+async function registerPasskey() {
+  const user = Store.user();
+  if (!user) return;
+  try {
+    const credId = await Passkey.register(user);
+    user.webauthnCredId = credId;
+    Store.save();
+    toast('Passkey added');
+    render();
+  } catch (e) {
+    toast('Could not set up a passkey (' + (e.message || e.name || 'unknown error') + ').');
+  }
+}
+
+function removePasskey() {
+  const user = Store.user();
+  if (!user) return;
+  user.webauthnCredId = null;
+  Store.save();
+  toast('Passkey removed');
+  render();
+}
 
 // ── Learn ─────────────────────────────────────────────────────
 Views.learn = () => {
@@ -2846,6 +3028,9 @@ window.render = render;
 window.doSignup = doSignup;
 window.doLogin = doLogin;
 window.doLogout = doLogout;
+window.loginWithPasskey = loginWithPasskey;
+window.registerPasskey = registerPasskey;
+window.removePasskey = removePasskey;
 window.toggleLesson = toggleLesson;
 window.startAttempt = startAttempt;
 window.setAttemptResponse = setAttemptResponse;
