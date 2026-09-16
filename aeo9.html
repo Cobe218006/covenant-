@@ -2632,6 +2632,7 @@ async function runVisibility() {
       brandCited: !!brandHit && brandCited,
       brandPosition: brandHit?.position ?? null,
       status, confidence, notes,
+      platform, method: isManual ? 'manual_entry' : 'api_direct',
       observedAt: Date.now(),
     });
   }
