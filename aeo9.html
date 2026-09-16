@@ -894,11 +894,12 @@ Views.signup = () => `
   </div>
 `;
 
-// Google/Microsoft sign-in need a server to hold the OAuth client secret and
-// complete the redirect handshake — this app has no server by design (single
-// HTML file, no build step). Rather than fake the buttons, they're shown
-// honestly disabled with the reason, and a passkey (real, working, no server
-// required) is offered as the actual alternative on the sign-in page.
+// Google/Microsoft/GitHub sign-in all need a server to hold the OAuth client
+// secret and complete the redirect handshake — this app has no server by
+// design (single HTML file, no build step). Rather than fake the buttons,
+// they're shown honestly disabled with the reason, and a passkey (real,
+// working, no server required) is offered as the actual alternative on the
+// sign-in page.
 function ssoPlaceholderBlock() {
   return `
     <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line)">
@@ -906,9 +907,10 @@ function ssoPlaceholderBlock() {
       <div style="display:flex;gap:8px">
         <button class="btn" style="flex:1" disabled title="Requires a server holding an OAuth client secret. This app has no server by design.">Google</button>
         <button class="btn" style="flex:1" disabled title="Requires a server holding an OAuth client secret. This app has no server by design.">Microsoft</button>
+        <button class="btn" style="flex:1" disabled title="Requires a server holding an OAuth client secret. This app has no server by design.">GitHub</button>
       </div>
       <p class="sub" style="font-size:10px;text-align:center;margin-top:8px;line-height:1.5">
-        Google and Microsoft sign-in need a server to keep an OAuth secret private — this app is a single HTML file with no server, so it can't do that honestly. A device passkey works today with no server at all; set one up from Sign in or the Dashboard.
+        Google, Microsoft, and GitHub sign-in all need a server to keep an OAuth secret private — this app is a single HTML file with no server, so it can't do that honestly. A device passkey works today with no server at all; set one up from Sign in or the Dashboard.
       </p>
     </div>
   `;
