@@ -1391,6 +1391,171 @@ Views.credentials = () => {
   `;
 };
 
+/* ─── Skill Passport ────────────────────────────────────────
+   Aggregates data that already exists elsewhere in the app.
+   Nothing here is a new measurement — it's a computed summary
+   of credentials, evidence, voice scores, and visibility runs
+   you already earned or recorded. The skill-level rule is shown
+   verbatim so the label is checkable, not asserted. ──────── */
+const SKILL_LEVELS = [
+  { id:'FOUNDATION',   label:'Foundation',   rule:(s) => true },
+  { id:'PRACTITIONER', label:'Practitioner', rule:(s) => s.credentials >= 1 && s.evidenceTotal >= 1 },
+  { id:'PROFESSIONAL', label:'Professional', rule:(s) => s.credentials >= 2 && s.evidenceVerifiedOrObserved >= 1 && s.voiceScored >= 1 },
+  { id:'SPECIALIST',   label:'Specialist',   rule:(s) => s.credentials >= 4 && s.voiceAvg !== null && s.voiceAvg >= 70 },
+  { id:'ADVANCED',     label:'Advanced',     rule:(s) => s.credentials >= 6 && s.voiceAvg !== null && s.voiceAvg >= 80 && s.evidenceVerifiedOrObserved >= 3 },
+];
+
+function computeSkillLevel(stats) {
+  let current = SKILL_LEVELS[0];
+  for (const lvl of SKILL_LEVELS) if (lvl.rule(stats)) current = lvl;
+  return current;
+}
+
+Views.passport = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+
+  const creds = Store.data.credentials.filter(c => c.userId === user.id);
+  const evidence = Store.evidence(user.id);
+  const evidenceByStatus = evidence.reduce((acc, e) => { acc[e.status] = (acc[e.status] || 0) + 1; return acc; }, {});
+  const voiceSessions = Store.data.voiceSessions.filter(v => v.userId === user.id && v.score);
+  const voiceAvg = voiceSessions.length ? Math.round(voiceSessions.reduce((n, v) => n + v.score.overall, 0) / voiceSessions.length) : null;
+  const visRuns = Store.visibility(user.id);
+  const prospects = Store.prospects(user.id);
+  const progress = Store.progress(user.id);
+  const lessonsCompleted = Object.keys(progress).length;
+
+  const stats = {
+    credentials: creds.length,
+    evidenceTotal: evidence.length,
+    evidenceVerifiedOrObserved: (evidenceByStatus.VERIFIED || 0) + (evidenceByStatus.OBSERVED || 0),
+    voiceScored: voiceSessions.length,
+    voiceAvg,
+  };
+  const level = computeSkillLevel(stats);
+  const levelIndex = SKILL_LEVELS.findIndex(l => l.id === level.id);
+
+  return `
+    <h1>AEO 9 Skill Passport</h1>
+    <p class="sub">A computed summary of what's already recorded elsewhere in this app — not a new score.</p>
+
+    <div class="card" style="margin-top:24px;border-color:var(--gold-dim);background:rgba(212,175,55,.05)">
+      <p class="eyebrow" style="color:var(--gold)">Skill level</p>
+      <h2 style="margin-top:6px;font-size:24px;color:var(--gold);font-weight:300">${esc(level.label)}</h2>
+      <div style="display:flex;gap:6px;margin-top:14px">
+        ${SKILL_LEVELS.map((l, i) => `<div style="flex:1;height:4px;border-radius:2px;background:${i <= levelIndex ? 'var(--gold)' : 'var(--obsidian-100)'}"></div>`).join('')}
+      </div>
+      <p style="margin-top:14px;font-size:11px;color:var(--text-mute);line-height:1.6">
+        Rule for "${esc(level.label)}": ${level.id === 'FOUNDATION' ? 'default starting level.' : ''}
+        ${level.id === 'PRACTITIONER' ? '≥1 credential and ≥1 evidence card.' : ''}
+        ${level.id === 'PROFESSIONAL' ? '≥2 credentials, ≥1 VERIFIED/OBSERVED evidence card, ≥1 scored voice session.' : ''}
+        ${level.id === 'SPECIALIST' ? '≥4 credentials and average voice score ≥70.' : ''}
+        ${level.id === 'ADVANCED' ? '≥6 credentials, average voice score ≥80, ≥3 VERIFIED/OBSERVED evidence cards.' : ''}
+      </p>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:24px">
+      <div class="stat">
+        <div class="stat-label">Credentials</div>
+        <div class="stat-value">${creds.length}</div>
+        <div class="stat-sub">of ${LADDER.length} on the ladder</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Evidence cards</div>
+        <div class="stat-value">${evidence.length}</div>
+        <div class="stat-sub">${stats.evidenceVerifiedOrObserved} VERIFIED/OBSERVED</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Voice avg</div>
+        <div class="stat-value">${voiceAvg !== null ? voiceAvg : '—'}</div>
+        <div class="stat-sub">${voiceSessions.length} scored session${voiceSessions.length === 1 ? '' : 's'}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Lessons completed</div>
+        <div class="stat-value">${lessonsCompleted}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Visibility runs</div>
+        <div class="stat-value">${visRuns.length}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Prospects researched</div>
+        <div class="stat-value">${prospects.length}</div>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:32px"><h2>Credentials on this passport</h2></div>
+    ${creds.length === 0 ? `<div class="empty">No credentials yet. <a href="#/credentials">View the ladder.</a></div>` : `
+      <div class="list">
+        ${creds.map(c => `
+          <div class="list-item" onclick="Router.go('verify/${c.verifyToken}')">
+            <span class="mono" style="color:var(--gold)">L${c.level}</span>
+            <span style="flex:1">${esc(c.title)}</span>
+            <span style="font-size:11px;color:var(--text-mute)">${c.issuedAt.slice(0,10)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `}
+
+    <div class="alert alert-info" style="margin-top:32px;font-size:12px">
+      <strong>Public sharing: COMING SOON.</strong> This passport is currently visible only to you. A shareable public URL (like credential verification) is not yet built.
+    </div>
+  `;
+};
+
+/* ─── External Certification Directory ───────────────────────
+   Third-party programs. AEO 9 does not issue these and they
+   never appear on the AEO 9 Credential Ladder. Status defaults
+   to UNVERIFIED because this list isn't checked against the
+   provider's site in real time — confirm current course names,
+   pricing, and requirements at the official URL before relying
+   on it. ─────────────────────────────────────────────────── */
+const EXTERNAL_CERTS = [
+  { provider:'HubSpot Academy', topic:'Inbound marketing, CRM, content', url:'https://academy.hubspot.com/', cost:'Free' },
+  { provider:'HubSpot Academy', topic:'SEO', url:'https://academy.hubspot.com/courses/seo-training', cost:'Free' },
+  { provider:'Semrush Academy', topic:'SEO fundamentals & technical SEO', url:'https://www.semrush.com/academy/', cost:'Free' },
+  { provider:'Google Skillshop', topic:'Google Ads certifications', url:'https://skillshop.withgoogle.com/', cost:'Free' },
+  { provider:'Google Skillshop', topic:'Google Analytics certification', url:'https://skillshop.withgoogle.com/', cost:'Free' },
+  { provider:'Google Search Console', topic:'Search performance & indexing (tool, not a certification)', url:'https://search.google.com/search-console/about', cost:'Free' },
+  { provider:'Meta Blueprint', topic:'Digital marketing on Meta platforms', url:'https://www.facebook.com/business/learn', cost:'Free + paid tracks' },
+  { provider:'Microsoft Advertising', topic:'Search advertising certification', url:'https://about.ads.microsoft.com/', cost:'Free' },
+  { provider:'Ahrefs Academy', topic:'SEO training', url:'https://ahrefs.com/academy', cost:'Free' },
+  { provider:'Moz', topic:'SEO learning center', url:'https://moz.com/learn/seo', cost:'Free' },
+  { provider:'Canva Design School', topic:'Design fundamentals', url:'https://www.canva.com/designschool/', cost:'Free' },
+];
+
+Views.certifications = () => {
+  return `
+    <h1>External Certification Directory</h1>
+    <p class="sub">Third-party programs. AEO 9 does not issue these credentials.</p>
+
+    <div class="alert alert-warn" style="margin-top:20px;font-size:12px">
+      <strong>These are not AEO 9 credentials.</strong> They never appear on your Credential Ladder or Skill Passport.
+      Every row below is marked <span class="tag tag-UNKNOWN" style="margin:0 4px">UNVERIFIED</span> because this list is
+      not checked against the provider's site in real time — course names, pricing, and requirements change.
+      Confirm current details at the official URL before relying on this list.
+    </div>
+
+    <div class="list" style="margin-top:20px">
+      ${EXTERNAL_CERTS.map(c => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+            <div>
+              <h3>${esc(c.provider)}</h3>
+              <p class="sub" style="font-size:12px;margin-top:4px">${esc(c.topic)}</p>
+            </div>
+            <span class="tag tag-UNKNOWN">UNVERIFIED</span>
+          </div>
+          <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-mute)">
+            <span>${esc(c.cost)}</span>
+            <a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">Official site →</a>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+};
+
 // ── Public verify ─────────────────────────────────────────────
 Views.verify = () => {
   const token = Router.params.segments[0];
@@ -2602,6 +2767,8 @@ function render() {
     { id:'visibility', label:'Visibility' },
     { id:'evidence', label:'Evidence' },
     { id:'credentials', label:'Credentials' },
+    { id:'passport', label:'Skill Passport' },
+    { id:'certifications', label:'External Certs' },
   ];
 
   document.getElementById('app').innerHTML = `
