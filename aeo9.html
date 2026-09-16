@@ -367,6 +367,15 @@ const SCHOOLS = [
   { n:30, name:'Industry Tools',                 pillar:'Tools' },
 ];
 
+// ─── Visibility store keys ────────────────────────────────────
+Store.visibility = (userId) => {
+  Store.data.visibility ||= {};
+  Store.data.visibility[userId] ||= [];
+  return Store.data.visibility[userId];
+};
+Store.getGeminiKey = () => localStorage.getItem('aeo9.geminiKey') || '';
+Store.setGeminiKey = (k) => localStorage.setItem('aeo9.geminiKey', k.trim());
+
 // Seeded courses with real lesson content — expand by adding objects here
 const COURSES = [
   {
@@ -2178,122 +2187,13 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-/* ─── Shell render ──────────────────────────────────────────── */
-function render() {
-  const user = Store.user();
-  const route = Router.current;
-  const view = Views[route] || Views.landing;
-  const html = view();
-
-  if (!user || route === 'landing' || route === 'login' || route === 'signup' || route === 'verify') {
-    document.getElementById('app').innerHTML = html;
-    return;
-  }
-
-  const NAV_ITEMS = [
-    { id:'dashboard', label:'Home' },
-    { id:'learn', label:'Learn' },
-    { id:'assessments', label:'Assess' },
-    { id:'voice', label:'Voice' },
-    { id:'prospects', label:'Prospects' },
-    { id:'evidence', label:'Evidence' },
-    { id:'credentials', label:'Credentials' },
-  ];
-
-  document.getElementById('app').innerHTML = `
-    <div class="shell">
-      <aside class="sidebar">
-        <div class="brand" onclick="Router.go('dashboard')">
-          <div class="brand-sub">Corporate Curators</div>
-          <div class="brand-name">AEO 9</div>
-          <div class="brand-tag">AI SEO Academy</div>
-        </div>
-        ${NAV_ITEMS.map(n => `
-          <div class="nav-item ${route === n.id || (route === 'course' && n.id === 'learn') || (route === 'lesson' && n.id === 'learn') || (route === 'attempt' && n.id === 'assessments') || (route === 'result' && n.id === 'assessments') || (route === 'voice-score' && n.id === 'voice') ? 'active' : ''}"
-               onclick="Router.go('${n.id}')">
-            <span class="nav-dot"></span>${n.label}
-          </div>
-        `).join('')}
-        <div style="flex:1"></div>
-        <div class="nav-item" onclick="Router.go('verify')">
-          <span class="nav-dot"></span>Verify
-        </div>
-        <div class="nav-item" onclick="doLogout()">
-          <span class="nav-dot"></span>Sign out
-        </div>
-        <p style="font-size:10px;color:var(--text-mute);margin-top:14px;padding:0 12px">${esc(user.email)}</p>
-      </aside>
-      <main class="main">${html}</main>
-    </div>
-    <nav class="bottom-nav">
-      ${NAV_ITEMS.slice(0, 5).map(n => `
-        <div class="nav-item ${route === n.id || (route === 'course' && n.id === 'learn') || (route === 'lesson' && n.id === 'learn') ? 'active' : ''}"
-             onclick="Router.go('${n.id}')">
-          <span class="nav-dot"></span>${n.label}
-        </div>
-      `).join('')}
-    </nav>
-  `;
-}
-
-/* ─── Boot ──────────────────────────────────────────────────── */
-Store.load();
-Router.parse();
-window.addEventListener('hashchange', () => { Router.parse(); render(); });
-render();
-
-// Expose for inline handlers
-window.Router = Router;
-window.Store = Store;
-window.render = render;
-window.doSignup = doSignup;
-window.doLogin = doLogin;
-window.doLogout = doLogout;
-window.toggleLesson = toggleLesson;
-window.startAttempt = startAttempt;
-window.setAttemptResponse = setAttemptResponse;
-window.setWrittenResponse = setWrittenResponse;
-window.submitAttempt = submitAttempt;
-window.issueCredential = issueCredential;
-window.startVoiceCall = startVoiceCall;
-window.startListening = startListening;
-window.stopListening = stopListening;
-window.interruptBuyer = interruptBuyer;
-window.showTypeFallback = showTypeFallback;
-window.sendTyped = sendTyped;
-window.endVoiceCall = endVoiceCall;
-window.showNewEvidence = showNewEvidence;
-window.saveEvidence = saveEvidence;
-window.closeModal = closeModal;
-window.showNewProspect = showNewProspect;
-window.saveProspect = saveProspect;
-window.showNewFinding = showNewFinding;
-window.saveFinding = saveFinding;
-window.gotoVerify = gotoVerify;
-window.toast = toast;
-
-/* ═══════════════════════════════════════════════════════════════
-   ADD-ON: AI Visibility Lab + AI-ZMOT
-   ─────────────────────────────────────────────────────────────────
+/* ─── AI Visibility Lab + AI-ZMOT ─────────────────────────────
    Works in three modes, labeled honestly:
      • api_direct     — you provided a Gemini API key
      • manual_entry   — you recorded what you observed in a platform's UI
      • simulated      — no observation; output is a hypothesis only
    Every observation carries its platform, method, date, and status.
-   No result is displayed without them.
-   ═══════════════════════════════════════════════════════════════ */
-(() => {
-'use strict';
-
-/* ─── Extend store (idempotent) ─────────────────────────────── */
-function ensureVisibility(userId) {
-  Store.data.visibility ||= {};
-  Store.data.visibility[userId] ||= [];
-  return Store.data.visibility[userId];
-}
-
-Store.getGeminiKey = () => localStorage.getItem('aeo9.geminiKey') || '';
-Store.setGeminiKey = (k) => localStorage.setItem('aeo9.geminiKey', k.trim());
+   No result is displayed without them. ─────────────────────── */
 
 /* ─── Provider adapters ─────────────────────────────────────── */
 const Providers = {
@@ -2362,12 +2262,12 @@ function computeMetrics(obs) {
 function computeZmot(observations) {
   const m = computeMetrics(observations);
   const stages = {
-    discovery:     clampScore(m.visibility),
-    research:      clampScore(Math.round((m.share + m.confidence) / 2)),
-    comparison:    clampScore(m.share),
-    validation:    clampScore(m.citation),
-    shortlisting:  clampScore(Math.round(m.visibility * 0.7 + m.citation * 0.3)),
-    action:        clampScore(Math.round(m.citation * 0.5 + m.confidence * 0.5)),
+    discovery:     clamp(m.visibility),
+    research:      clamp(Math.round((m.share + m.confidence) / 2)),
+    comparison:    clamp(m.share),
+    validation:    clamp(m.citation),
+    shortlisting:  clamp(Math.round(m.visibility * 0.7 + m.citation * 0.3)),
+    action:        clamp(Math.round(m.citation * 0.5 + m.confidence * 0.5)),
   };
   const overall = Math.round(Object.values(stages).reduce((a, b) => a + b, 0) / 6);
 
@@ -2383,13 +2283,11 @@ function computeZmot(observations) {
   };
 }
 
-function clampScore(n) { return Math.max(0, Math.min(100, Math.round(n))); }
-
 /* ─── Views ─────────────────────────────────────────────────── */
 Views.visibility = () => {
   const user = Store.user();
   if (!user) return Views.landing();
-  const runs = ensureVisibility(user.id).slice().reverse();
+  const runs = Store.visibility(user.id).slice().reverse();
   const hasKey = !!Store.getGeminiKey();
 
   return `
@@ -2584,7 +2482,7 @@ async function runVisibility() {
     runAt: Date.now(),
   };
 
-  ensureVisibility(user.id).push(run);
+  Store.visibility(user.id).push(run);
   Store.save();
   Router.go('visibility-run/' + run.id);
 }
@@ -2593,7 +2491,7 @@ Views['visibility-run'] = () => {
   const user = Store.user();
   if (!user) return Views.landing();
   const id = Router.params.segments[0];
-  const run = ensureVisibility(user.id).find(r => r.id === id);
+  const run = Store.visibility(user.id).find(r => r.id === id);
   if (!run) return `<p>Run not found.</p>`;
 
   const m = computeMetrics(run.observations);
@@ -2683,50 +2581,108 @@ Views['visibility-run'] = () => {
   `;
 };
 
-/* ─── Nav integration ───────────────────────────────────────── */
-const origRender = window.render;
-window.render = function() {
-  origRender();
-  // After render, inject "Visibility" into the sidebar + bottom nav
+/* ─── Shell render ──────────────────────────────────────────── */
+function render() {
   const user = Store.user();
-  if (!user) return;
   const route = Router.current;
-  const sidebar = document.querySelector('.sidebar');
-  if (sidebar && !sidebar.querySelector('[data-nav="visibility"]')) {
-    const marker = sidebar.querySelector('.nav-item[onclick*="prospects"]');
-    if (marker) {
-      const el = document.createElement('div');
-      el.className = 'nav-item' + ((route === 'visibility' || route === 'visibility-new' || route === 'visibility-run') ? ' active' : '');
-      el.dataset.nav = 'visibility';
-      el.onclick = () => Router.go('visibility');
-      el.innerHTML = '<span class="nav-dot"></span>Visibility';
-      marker.after(el);
-    }
-  }
-  const bottom = document.querySelector('.bottom-nav');
-  if (bottom && !bottom.querySelector('[data-nav="visibility"]')) {
-    const first = bottom.querySelector('.nav-item');
-    if (first) {
-      const el = document.createElement('div');
-      el.className = 'nav-item' + ((route === 'visibility' || route === 'visibility-new' || route === 'visibility-run') ? ' active' : '');
-      el.dataset.nav = 'visibility';
-      el.onclick = () => Router.go('visibility');
-      el.innerHTML = '<span class="nav-dot"></span>Visibility';
-      // Insert second so "Home" stays first
-      first.after(el);
-      // Trim to 6 items so it fits
-      while (bottom.children.length > 6) bottom.removeChild(bottom.lastChild);
-    }
-  }
-};
+  const view = Views[route] || Views.landing;
+  const html = view();
 
-/* ─── Expose handlers ───────────────────────────────────────── */
+  if (!user || route === 'landing' || route === 'login' || route === 'signup' || route === 'verify') {
+    document.getElementById('app').innerHTML = html;
+    return;
+  }
+
+  const NAV_ITEMS = [
+    { id:'dashboard', label:'Home' },
+    { id:'learn', label:'Learn' },
+    { id:'assessments', label:'Assess' },
+    { id:'voice', label:'Voice' },
+    { id:'prospects', label:'Prospects' },
+    { id:'visibility', label:'Visibility' },
+    { id:'evidence', label:'Evidence' },
+    { id:'credentials', label:'Credentials' },
+  ];
+
+  document.getElementById('app').innerHTML = `
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand" onclick="Router.go('dashboard')">
+          <div class="brand-sub">Corporate Curators</div>
+          <div class="brand-name">AEO 9</div>
+          <div class="brand-tag">AI SEO Academy</div>
+        </div>
+        ${NAV_ITEMS.map(n => `
+          <div class="nav-item ${route === n.id || (route === 'course' && n.id === 'learn') || (route === 'lesson' && n.id === 'learn') || (route === 'attempt' && n.id === 'assessments') || (route === 'result' && n.id === 'assessments') || (route === 'voice-score' && n.id === 'voice') || ((route === 'visibility-new' || route === 'visibility-run') && n.id === 'visibility') ? 'active' : ''}"
+               onclick="Router.go('${n.id}')">
+            <span class="nav-dot"></span>${n.label}
+          </div>
+        `).join('')}
+        <div style="flex:1"></div>
+        <div class="nav-item" onclick="Router.go('verify')">
+          <span class="nav-dot"></span>Verify
+        </div>
+        <div class="nav-item" onclick="doLogout()">
+          <span class="nav-dot"></span>Sign out
+        </div>
+        <p style="font-size:10px;color:var(--text-mute);margin-top:14px;padding:0 12px">${esc(user.email)}</p>
+      </aside>
+      <main class="main">${html}</main>
+    </div>
+    <nav class="bottom-nav">
+      ${['dashboard','learn','assessments','voice','visibility'].map(id => {
+        const n = NAV_ITEMS.find(x => x.id === id);
+        const active = route === n.id
+          || (route === 'course' && n.id === 'learn')
+          || (route === 'lesson' && n.id === 'learn')
+          || ((route === 'visibility-new' || route === 'visibility-run') && n.id === 'visibility');
+        return `
+        <div class="nav-item ${active ? 'active' : ''}" onclick="Router.go('${n.id}')">
+          <span class="nav-dot"></span>${n.label}
+        </div>
+      `;
+      }).join('')}
+    </nav>
+  `;
+}
+
+/* ─── Boot ──────────────────────────────────────────────────── */
+Store.load();
+Router.parse();
+window.addEventListener('hashchange', () => { Router.parse(); render(); });
+render();
+
+// Expose for inline handlers
+window.Router = Router;
+window.Store = Store;
+window.render = render;
+window.doSignup = doSignup;
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.toggleLesson = toggleLesson;
+window.startAttempt = startAttempt;
+window.setAttemptResponse = setAttemptResponse;
+window.setWrittenResponse = setWrittenResponse;
+window.submitAttempt = submitAttempt;
+window.issueCredential = issueCredential;
+window.startVoiceCall = startVoiceCall;
+window.startListening = startListening;
+window.stopListening = stopListening;
+window.interruptBuyer = interruptBuyer;
+window.showTypeFallback = showTypeFallback;
+window.sendTyped = sendTyped;
+window.endVoiceCall = endVoiceCall;
+window.showNewEvidence = showNewEvidence;
+window.saveEvidence = saveEvidence;
+window.closeModal = closeModal;
+window.showNewProspect = showNewProspect;
+window.saveProspect = saveProspect;
+window.showNewFinding = showNewFinding;
+window.saveFinding = saveFinding;
+window.gotoVerify = gotoVerify;
+window.toast = toast;
 window.promptKey = promptKey;
 window.runVisibility = runVisibility;
-
-// Trigger first render with the new nav
-render();
-})();
 </script>
 </body>
 </html>
