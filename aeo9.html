@@ -1,0 +1,2732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>AEO 9 — AI SEO Academy</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%230A0A0A' stroke='%23D4AF37' stroke-width='3'/><text x='50' y='63' font-size='40' fill='%23D4AF37' text-anchor='middle' font-family='serif'>9</text></svg>">
+<style>
+:root{
+  --obsidian:#0A0A0A; --obsidian-50:#111; --obsidian-100:#161616; --obsidian-150:#1c1c1c;
+  --gold:#D4AF37; --gold-dim:#8a7028; --gold-bright:#f0d060;
+  --text:#e8e8e8; --text-dim:#a0a0a0; --text-mute:#6a6a6a;
+  --line:#232323; --line-soft:#1a1a1a;
+  --green:#4ade80; --green-bg:#0f2a1a; --green-line:#1e4a2d;
+  --amber:#fbbf24; --amber-bg:#2a1f0a; --amber-line:#4a3512;
+  --red:#f87171; --red-bg:#2a0f0f; --red-line:#4a1e1e;
+  --blue:#60a5fa; --blue-bg:#0f1a2a; --blue-line:#1e2d4a;
+  --purple:#c084fc; --purple-bg:#1a0f2a; --purple-line:#2d1e4a;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--obsidian); color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit;background:var(--obsidian-50);border:1px solid var(--line);padding:10px 12px;border-radius:6px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--gold-dim)}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Layout */
+#app{display:flex;min-height:100vh;flex-direction:column}
+.shell{display:flex;flex:1;max-width:1200px;margin:0 auto;width:100%}
+.sidebar{
+  width:230px;flex-shrink:0;border-right:1px solid var(--line);
+  padding:24px 16px;display:none;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.main{flex:1;padding:24px 20px calc(90px + var(--safe-bottom)) 20px;min-width:0}
+@media(min-width:900px){
+  .sidebar{display:flex}
+  .main{padding:40px 40px 40px 40px}
+  .bottom-nav{display:none!important}
+}
+
+/* Brand */
+.brand{cursor:pointer;user-select:none;padding:4px 8px;margin-bottom:16px}
+.brand-sub{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-mute)}
+.brand-name{font-size:22px;font-weight:300;color:var(--gold);letter-spacing:.02em;margin-top:4px}
+.brand-tag{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--text-mute);margin-top:2px}
+
+/* Nav */
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;
+  font-size:13.5px;color:var(--text-dim);transition:all .15s;cursor:pointer;
+}
+.nav-item:hover{background:var(--obsidian-50);color:var(--text)}
+.nav-item.active{background:rgba(212,175,55,.09);color:var(--gold)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--line);flex-shrink:0}
+.nav-item.active .nav-dot{background:var(--gold)}
+
+/* Bottom nav */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;display:flex;
+  background:rgba(10,10,10,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);z-index:50;
+  padding-bottom:var(--safe-bottom);
+}
+.bottom-nav .nav-item{
+  flex:1;flex-direction:column;gap:4px;padding:10px 4px;border-radius:0;
+  font-size:10px;letter-spacing:.06em;text-transform:uppercase;text-align:center;
+}
+.bottom-nav .nav-dot{width:5px;height:5px}
+
+/* Typography */
+h1{font-size:26px;font-weight:300;letter-spacing:-.01em;line-height:1.2}
+h2{font-size:18px;font-weight:400;letter-spacing:-.005em}
+h3{font-size:15px;font-weight:500}
+.sub{color:var(--text-mute);font-size:13px;margin-top:4px}
+.eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-mute)}
+.section-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 18px;border-radius:999px;font-size:13.5px;
+  border:1px solid var(--line);background:var(--obsidian-50);color:var(--text);
+  transition:all .15s;cursor:pointer;
+}
+.btn:hover{border-color:var(--line-soft);background:var(--obsidian-100)}
+.btn-primary{
+  background:rgba(212,175,55,.1);border-color:var(--gold-dim);color:var(--gold);
+}
+.btn-primary:hover{background:rgba(212,175,55,.18);border-color:var(--gold)}
+.btn-danger{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.btn-block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-lg{padding:14px 28px;font-size:15px}
+
+/* Cards */
+.card{
+  background:var(--obsidian-50);border:1px solid var(--line);
+  border-radius:8px;padding:16px;
+}
+.card-link{cursor:pointer;transition:border-color .15s}
+.card-link:hover{border-color:var(--gold-dim)}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr}
+.grid-3{grid-template-columns:1fr}
+@media(min-width:640px){
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+}
+
+/* Stat */
+.stat{padding:16px;background:var(--obsidian-50);border:1px solid var(--line);border-radius:8px}
+.stat-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-mute)}
+.stat-value{font-size:24px;font-weight:300;color:var(--gold);margin-top:6px}
+.stat-sub{font-size:11px;color:var(--text-mute);margin-top:2px}
+
+/* Progress */
+.progress{height:3px;background:var(--obsidian-100);border-radius:2px;overflow:hidden;margin-top:12px}
+.progress-bar{height:100%;background:var(--gold);transition:width .3s}
+
+/* Evidence tags */
+.tag{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid;white-space:nowrap;
+}
+.tag-VERIFIED{background:var(--green-bg);color:var(--green);border-color:var(--green-line)}
+.tag-OBSERVED{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-line)}
+.tag-INFERRED{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
+.tag-HYPOTHESIS{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-line)}
+.tag-UNKNOWN{background:var(--obsidian-100);color:var(--text-mute);border-color:var(--line)}
+
+/* Modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(4px);
+}
+.modal{
+  background:var(--obsidian-50);border:1px solid var(--line);border-radius:10px;
+  padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;
+}
+
+/* Auth */
+.auth-wrap{max-width:400px;margin:0 auto;padding:60px 24px}
+
+/* Voice */
+.call-status{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px;margin-bottom:18px;text-transform:uppercase;
+  letter-spacing:.2em;font-size:11px;color:var(--text-dim);
+}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--text-mute)}
+.pulse.listening{background:var(--green);animation:pulse 1.4s infinite}
+.pulse.speaking{background:var(--gold);animation:pulse 1s infinite}
+.pulse.thinking{background:var(--amber);animation:pulse .8s infinite}
+.pulse.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+.transcript{
+  border:1px solid var(--line);border-radius:8px;background:var(--obsidian-50);
+  max-height:44vh;overflow-y:auto;padding:16px;margin-bottom:18px;
+}
+.turn{margin-bottom:12px;font-size:14px;line-height:1.5}
+.turn-who{font-weight:500;margin-right:6px}
+.turn.learner .turn-who{color:var(--green)}
+.turn.buyer .turn-who{color:var(--gold)}
+
+/* Score bars */
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.score-label{width:120px;font-size:12px;color:var(--text-dim);flex-shrink:0}
+.score-bar{flex:1;height:5px;background:var(--obsidian-100);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;background:var(--gold);transition:width .6s}
+.score-val{width:30px;text-align:right;font-size:12px;color:var(--gold)}
+
+/* List */
+.list{display:flex;flex-direction:column;gap:8px}
+.list-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--obsidian-50);border:1px solid var(--line);border-radius:6px;
+  font-size:14px;cursor:pointer;transition:border-color .15s;
+}
+.list-item:hover{border-color:var(--gold-dim)}
+.lesson-check{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+}
+.lesson-check.done{background:var(--gold);border-color:var(--gold)}
+.lesson-check.done::after{content:"✓";color:var(--obsidian);font-size:11px;font-weight:700}
+
+/* Alert */
+.alert{padding:12px 16px;border-radius:6px;font-size:13px;border:1px solid;margin-bottom:16px}
+.alert-info{background:var(--blue-bg);border-color:var(--blue-line);color:var(--blue)}
+.alert-warn{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)}
+.alert-danger{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.alert-gold{background:rgba(212,175,55,.08);border-color:var(--gold-dim);color:var(--gold)}
+
+/* Empty */
+.empty{
+  padding:40px 20px;text-align:center;color:var(--text-mute);
+  font-size:13px;border:1px dashed var(--line);border-radius:8px;
+}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;
+  transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--obsidian-100);border:1px solid var(--gold-dim);
+  color:var(--gold);padding:10px 20px;border-radius:999px;
+  font-size:13px;z-index:200;transition:all .25s;pointer-events:none;
+  max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Choice */
+.choice{
+  display:flex;gap:10px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:6px;cursor:pointer;transition:all .15s;margin-bottom:8px;
+  font-size:14px;line-height:1.4;
+}
+.choice:hover{border-color:var(--gold-dim)}
+.choice.selected{border-color:var(--gold);background:rgba(212,175,55,.05)}
+.choice input{width:auto;margin:2px 0 0 0;flex-shrink:0;accent-color:var(--gold)}
+
+/* Field */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-mute);margin-bottom:6px}
+
+/* Bullet list */
+.bullets{list-style:none;font-size:14px;line-height:1.6}
+.bullets li{padding-left:16px;position:relative;margin-bottom:6px;color:var(--text-dim)}
+.bullets li::before{content:"·";position:absolute;left:4px;color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+/* ═════════════════════════════════════════════════════════════════
+   AEO 9 — Single-File Application
+   Corporate Curators · Curating Careers Since 2026
+   ─────────────────────────────────────────────────────────────────
+   Everything runs in the browser. Data persists in localStorage.
+   Voice uses the Web Speech API (built into most browsers).
+   Credentials use real SHA-256 via Web Crypto.
+   No fake data. No fabricated results. Every claim carries a status.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Store ──────────────────────────────────────────────────── */
+const Store = {
+  KEY: 'aeo9.v1',
+  data: null,
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      this.data = raw ? JSON.parse(raw) : this.blank();
+    } catch { this.data = this.blank(); }
+    return this.data;
+  },
+
+  blank() {
+    return {
+      users: [],              // { id, name, email, passwordHash, role, createdAt }
+      session: null,          // { userId }
+      progress: {},           // { userId: { lessonId: true } }
+      attempts: {},           // { userId: [ { id, assessmentSlug, score, passed, submittedAt, responses } ] }
+      credentials: [],        // { id, userId, level, title, issuedAt, payload, digestSha256, verifyToken, status, evidence }
+      voiceSessions: [],      // { id, userId, scenario, persona, difficulty, turns:[], startedAt, endedAt, score }
+      evidence: {},           // { userId: [ { id, claim, sourceUrl, sourceDate, status, confidence, notes, createdAt } ] }
+      prospects: {},          // { userId: [ { id, companyName, domain, findings:[], createdAt } ] }
+      usage: {},              // { userId: [ { kind, seconds, at } ] }
+      budget: { dailyVoiceSeconds: 900, hardStop: true },
+    };
+  },
+
+  save() { localStorage.setItem(this.KEY, JSON.stringify(this.data)); },
+  reset() { localStorage.removeItem(this.KEY); this.data = null; this.load(); },
+
+  // helpers
+  uid() { return Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4); },
+  user() { return this.data.session ? this.data.users.find(u => u.id === this.data.session.userId) : null; },
+  progress(userId) { return this.data.progress[userId] || (this.data.progress[userId] = {}); },
+  evidence(userId) { return this.data.evidence[userId] || (this.data.evidence[userId] = []); },
+  prospects(userId) { return this.data.prospects[userId] || (this.data.prospects[userId] = []); },
+  attempts(userId) { return this.data.attempts[userId] || (this.data.attempts[userId] = []); },
+  usage(userId) { return this.data.usage[userId] || (this.data.usage[userId] = []); },
+};
+
+/* ─── Crypto (real SHA-256 via Web Crypto) ───────────────────── */
+const Crypto = {
+  async hashPassword(password) {
+    const enc = new TextEncoder().encode(password + '::aeo9.salt.v1');
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return this.hex(buf);
+  },
+
+  async sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return this.hex(buf);
+  },
+
+  hex(buffer) {
+    return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  // Deterministic JSON canonicalization (sorted keys, no whitespace)
+  canonicalize(obj) {
+    if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+    if (Array.isArray(obj)) return '[' + obj.map(o => this.canonicalize(o)).join(',') + ']';
+    const keys = Object.keys(obj).filter(k => obj[k] !== undefined).sort();
+    return '{' + keys.map(k => JSON.stringify(k) + ':' + this.canonicalize(obj[k])).join(',') + '}';
+  },
+
+  randomToken(bytes = 16) {
+    const arr = new Uint8Array(bytes);
+    crypto.getRandomValues(arr);
+    return btoa(String.fromCharCode(...arr)).replace(/[+/=]/g, '').slice(0, 22);
+  },
+};
+
+/* ─── Curriculum ────────────────────────────────────────────── */
+const SCHOOLS = [
+  { n:1, name:'SEO & Search',                    pillar:'Search Fundamentals' },
+  { n:2, name:'AI Search',                       pillar:'AI Search' },
+  { n:3, name:'AEO',                             pillar:'AI Search' },
+  { n:4, name:'GEO',                             pillar:'AI Search' },
+  { n:5, name:'LLM Visibility',                  pillar:'AI Search' },
+  { n:6, name:'AI-ZMOT',                         pillar:'Buyer Behavior' },
+  { n:7, name:'Semantic Web & Knowledge Graphs', pillar:'Semantics' },
+  { n:8, name:'Structured Data',                 pillar:'Semantics' },
+  { n:9, name:'AI Retrieval',                    pillar:'AI Systems' },
+  { n:10, name:'AI Content Engineering',         pillar:'Content' },
+  { n:11, name:'Digital PR',                     pillar:'Authority' },
+  { n:12, name:'AI Advertising',                 pillar:'Advertising' },
+  { n:13, name:'Analytics & Measurement',        pillar:'Measurement' },
+  { n:14, name:'AI Engineering',                 pillar:'AI Systems' },
+  { n:15, name:'AI Agents & Automation',         pillar:'AI Systems' },
+  { n:16, name:'CRM & RevOps',                   pillar:'Revenue' },
+  { n:17, name:'AI SEO Sales',                   pillar:'Sales' },
+  { n:18, name:'Enterprise Sales',               pillar:'Sales' },
+  { n:19, name:'Business Acumen',                pillar:'Business' },
+  { n:20, name:'Prospect Research',              pillar:'Sales' },
+  { n:21, name:'AI Consulting',                  pillar:'Delivery' },
+  { n:22, name:'AI SEO Ops',                     pillar:'Delivery' },
+  { n:23, name:'AI Leadership',                  pillar:'Leadership' },
+  { n:24, name:'AI Ethics & Governance',         pillar:'Governance' },
+  { n:25, name:'Digital Identity',               pillar:'Trust' },
+  { n:26, name:'Cryptographic Verification',     pillar:'Trust' },
+  { n:27, name:'Verifiable Credentials',         pillar:'Trust' },
+  { n:28, name:'Blockchain & Proof',             pillar:'Trust' },
+  { n:29, name:'Career Development',             pillar:'Career' },
+  { n:30, name:'Industry Tools',                 pillar:'Tools' },
+];
+
+// Seeded courses with real lesson content — expand by adding objects here
+const COURSES = [
+  {
+    slug:'seo-foundations', title:'SEO Foundations', school:1, level:1, theme:'SEO & Search',
+    modules: [
+      { title:'What SEO Actually Is', lessons:[
+        { id:'sf-1-1', title:'Search engines as retrieval systems', content:
+`A search engine is a retrieval system. It crawls pages, indexes them, and ranks candidates by relevance signals. Nothing more mystical than that.
+
+Your job as a professional is to make a page findable, parseable, and worth ranking. Every technique in this curriculum is downstream of that sentence.` },
+        { id:'sf-1-2', title:'Intent is the unit of work', content:
+`Keywords are not the unit of work. Intent is.
+
+A keyword like "best CRM for agencies" encodes: comparative research, agency context, decision-stage buyer. The page that wins is the one that satisfies that intent — not the one that repeats the phrase most often.` },
+        { id:'sf-1-3', title:'Crawl, index, rank — the three gates', content:
+`Every SEO problem is one of three failures:
+
+1. The crawler can't reach the page.
+2. The indexer doesn't understand what the page is about.
+3. The ranker doesn't consider it the best answer.
+
+Diagnose in that order. Fixing rank before crawl is wasted work.` },
+      ]},
+      { title:'Reading a SERP Like a Professional', lessons:[
+        { id:'sf-2-1', title:'SERP features as intent signals', content:
+`Google doesn't just rank pages. It interprets intent and constructs a result page around it.
+
+When you see AI Overviews, People Also Ask, local packs, or video carousels in a SERP, Google is telling you exactly what intent it thinks the query carries. Read it. That's the brief.` },
+        { id:'sf-2-2', title:'AI Overviews — what they change', content:
+`An AI Overview is a synthesized answer. It cites sources. It sits above the organic results.
+
+For professionals, this changes two things: how often your page is cited (not just ranked), and what format wins (extractable, structured, evidence-backed answers).
+
+This is where AEO begins.` },
+      ]},
+    ],
+  },
+  {
+    slug:'ai-search-foundations', title:'AI Search Foundations', school:2, level:1, theme:'AI Search',
+    modules: [
+      { title:'From Ranked Lists to Synthesized Answers', lessons:[
+        { id:'asf-1-1', title:'What changed', content:
+`Traditional search returns ten ranked links. AI search returns one synthesized answer with citations.
+
+The unit of competition shifts: it's no longer "can I be on page one," but "am I mentioned, and am I cited, in the answer the AI produces."` },
+        { id:'asf-1-2', title:'Mentions vs citations', content:
+`A mention is your brand named in the answer text.
+A citation is a source URL surfaced by the AI as evidence for the answer.
+
+They are different, and they require different work.
+
+A mention without a citation means the AI knows your brand but is sourcing its answer elsewhere — different remediation than simply being absent.` },
+        { id:'asf-1-3', title:'Observation is the only evidence', content:
+`You cannot fabricate visibility. If you want to know whether a brand is cited by AI Overviews for a given prompt, you have to run the prompt, at a specific time, on a specific platform, and record what you saw.
+
+Everything else is guessing dressed as expertise.` },
+      ]},
+      { title:'AEO in Practice', lessons:[
+        { id:'asf-2-1', title:'Extractable answers win', content:
+`AI systems retrieve passages, not pages. A page that buries the answer beneath three paragraphs of preamble loses to a page that opens with it.
+
+Write so that any given paragraph could be lifted cleanly into an answer and still make sense.` },
+        { id:'asf-2-2', title:'Entities, not keywords', content:
+`AI search is entity-aware. It knows that "Apple" the company and "apple" the fruit are different, and it knows which one your query means.
+
+To be found, you have to be a recognized entity with clear relationships to other entities — not just a page that mentions words.` },
+      ]},
+    ],
+  },
+  {
+    slug:'ai-seo-sales', title:'AI SEO Sales', school:17, level:1, theme:'AI SEO Sales',
+    modules: [
+      { title:'The Framework', lessons:[
+        { id:'sales-1-1', title:'Research → Hypothesis → Permission → Discovery', content:
+`Every good sales conversation starts before the call.
+
+Research the prospect using only public information. Form a specific hypothesis about what's likely true. Ask permission to share it. Use it to open discovery.
+
+Skipping research produces generic calls. Skipping the hypothesis produces interrogations. Skipping permission produces resistance.` },
+        { id:'sales-1-2', title:'Evidence beats assertion', content:
+`"Your competitor outranks you in AI search" is an assertion. It sounds like expertise. It's also the kind of claim that ends a call when the buyer asks "how do you know?"
+
+"In our observed test on [date] across [platform], your competitor appeared in 7 of 10 prompts. You appeared in 1. Here are the prompts and the raw answers" is evidence. It survives interrogation.
+
+Only make the second kind of claim.` },
+        { id:'sales-1-3', title:'The Claim Firewall', content:
+`Before you make a claim about AI visibility, have four things ready:
+
+1. The platform you observed.
+2. The prompt you ran.
+3. The date you ran it.
+4. What you actually saw.
+
+If you have all four, make the claim with confidence.
+If you have fewer than four, reframe: "in our initial test" or "as an example" — or don't make it.` },
+      ]},
+      { title:'Objections as Information', lessons:[
+        { id:'sales-2-1', title:'"We already have SEO"', content:
+`This objection is almost never about SEO. It's about risk.
+
+The buyer is saying: "I don't want to fund something new that might fail. Help me understand how this connects to what we already do."
+
+Good response: acknowledge, reframe as layer not replacement, propose a bounded next step.` },
+        { id:'sales-2-2', title:'"AI search doesn\'t matter"', content:
+`Sometimes this is a real belief. Sometimes it's a test. Sometimes it's a delay tactic.
+
+Do not argue. Ask which of their customer segments they believe are already using AI assistants. Let their answer guide the conversation.` },
+      ]},
+    ],
+  },
+  {
+    slug:'evidence-and-verification', title:'Evidence & Verification', school:26, level:2, theme:'Cryptographic Verification',
+    modules: [
+      { title:'Why Proof Matters', lessons:[
+        { id:'ev-1-1', title:'Claim vs evidence', content:
+`A claim is a statement. Evidence is what makes it checkable.
+
+In professional AI SEO work, most claims about results are unverifiable in real time. The professional response is not to make fewer claims — it's to attach evidence status to every claim you do make.
+
+VERIFIED: independently checkable right now.
+OBSERVED: you saw it, at a specific time, on a specific system.
+INFERRED: derived from observed data, but not directly observed.
+HYPOTHESIS: a working assumption you're testing.
+UNKNOWN: you don't know.
+
+Every professional statement should be reducible to one of these five.` },
+        { id:'ev-1-2', title:'What SHA-256 does', content:
+`SHA-256 is a hash function. Feed it any input, get a 64-character hex digest. Change one character of input, get a completely different digest.
+
+This makes it useful for integrity: given the payload and the digest, anyone can verify the payload hasn't changed.
+
+It does NOT:
+- prove who issued the payload
+- prove the payload is true
+- prevent someone from generating a different valid digest
+
+For that you need a digital signature (asymmetric keys) on top of the hash.` },
+        { id:'ev-1-3', title:'What a signature adds', content:
+`A digital signature uses a private key to sign a payload. Anyone with the public key can verify the signature without learning the private key.
+
+This proves: this specific payload was signed by the holder of this specific private key.
+
+A credential that only carries a SHA-256 digest is a checksum. A credential that carries a signature is a proof. Both are useful. They are not the same thing, and claiming the checksum is the proof is dishonest.` },
+      ]},
+    ],
+  },
+  {
+    slug:'ai-zmot', title:'AI-ZMOT Foundations', school:6, level:1, theme:'AI-ZMOT',
+    modules: [
+      { title:'The Six Stages', lessons:[
+        { id:'zmot-1-1', title:'Discovery', content:
+`At the discovery stage, the buyer doesn't yet know their problem has a name. They ask broad questions to AI assistants: "why do my competitors show up when I search?" or "how is AI changing search?"
+
+If the AI doesn't mention your brand in answers to these questions, you don't exist at the top of the funnel.` },
+        { id:'zmot-1-2', title:'Research', content:
+`The buyer now knows the category. They ask: "what is answer engine optimization" or "how does AEO differ from SEO?"
+
+You need to be cited as a source on these questions — not just mentioned. This is where content depth and extractability matter most.` },
+        { id:'zmot-1-3', title:'Comparison', content:
+`The buyer is evaluating named options. They ask: "AEO 9 vs [competitor]" or "best AEO training programs."
+
+If you're not appearing next to your competitors in these answers, the buyer never sees you as an option.` },
+        { id:'zmot-1-4', title:'Validation', content:
+`The buyer has a shortlist and is looking for reasons to be reassured. They ask: "is [brand] legit?" or "reviews of [brand]."
+
+Third-party evidence, reviews, and citation-worthy references matter disproportionately here.` },
+        { id:'zmot-1-5', title:'Shortlisting', content:
+`The buyer is comparing two or three finalists. They ask specific feature or fit questions.
+
+At this stage, being mentioned is table stakes. Being cited as the answer to their specific question is what wins.` },
+        { id:'zmot-1-6', title:'Action', content:
+`The buyer is ready to act. They ask "how do I sign up" or "where do I buy."
+
+If your brand doesn't appear clearly in answers to action-stage prompts, buyers who were ready to convert can end up at a competitor because the AI pointed them there instead.` },
+      ]},
+    ],
+  },
+];
+
+/* ─── Assessment Bank ───────────────────────────────────────── */
+const ASSESSMENTS = [
+  {
+    slug:'ai-search-foundations', title:'AI Search Foundations', level:1, passing:80,
+    questions:[
+      { id:'q1', type:'mcq', pts:1,
+        prompt:'Which best describes the difference between traditional SEO and AI search visibility?',
+        options:[
+          { id:'a', text:'AI search ignores traditional SEO signals entirely.' },
+          { id:'b', text:'AI search synthesizes answers and cites sources, rather than returning a ranked list of links.' },
+          { id:'c', text:'AI search is just traditional SEO with a new name.' },
+          { id:'d', text:'AI search only uses paid advertising data.' },
+        ], correct:['b'] },
+      { id:'q2', type:'mcq', pts:1,
+        prompt:'A client asks: "Do we still need schema.org markup for AI search?" What is the professionally accurate response?',
+        options:[
+          { id:'a', text:'No — LLMs ignore structured data entirely.' },
+          { id:'b', text:'Yes — schema.org guarantees you will be cited by AI Overviews.' },
+          { id:'c', text:'Structured data helps machines disambiguate entities and relationships, which supports — but does not guarantee — retrieval and citation.' },
+          { id:'d', text:'It only matters for Google, not other AI systems.' },
+        ], correct:['c'] },
+      { id:'q3', type:'multi', pts:2,
+        prompt:'Which of the following are legitimate ways to observe a brand\'s visibility in AI search? (Select all that apply.)',
+        options:[
+          { id:'a', text:'Running the same prompt across multiple AI systems and recording which brands are mentioned and cited.' },
+          { id:'b', text:'Assuming visibility based on traditional Google rankings.' },
+          { id:'c', text:'Documenting the source URLs that AI systems cite in their answers.' },
+          { id:'d', text:'Guessing what the AI would probably say based on industry knowledge.' },
+        ], correct:['a','c'] },
+      { id:'q4', type:'written', pts:6,
+        prompt:'A prospect says: "AI search doesn\'t matter for our business — our customers still use Google."\n\nWrite a 3–5 sentence professional response. Acknowledge without dismissing, reframe with specifics, propose a next step. Do not fabricate statistics, studies, or client results.',
+        keywords:['google','overview','layer','layer','measure','test','specific','next'],
+        antiKeywords:['studies show','research shows','97%','85%','always','guaranteed'],
+        rubric:'Reward: acknowledging the buyer, reframing AI search as layered on Google, proposing a concrete observation approach, offering a low-commitment next step. Penalize heavily: fabricated statistics, studies, or client claims.' },
+      { id:'q5', type:'written', pts:6,
+        prompt:'Explain the difference between a brand mention and a brand citation in an AI-generated answer. Give a concrete example of each, and explain why the distinction matters for measurement.',
+        keywords:['mention','citation','source','url','name','measure','different'],
+        antiKeywords:[],
+        rubric:'Reward: correct definition of mention (brand named), correct definition of citation (URL surfaced), concrete examples, explanation of why it matters (mention without citation = different remediation).' },
+    ],
+  },
+];
+
+/* ─── Buyer Persona Engine (Web Speech API) ────────────────── */
+const PERSONAS = {
+  marketing_director: {
+    label:'Marketing Director',
+    voiceHint:'confident',
+    opening:'Hi, this is Dana. I\'ve got about ten minutes.',
+    resistance:{
+      evidence:['How do you know that?', 'Where\'s that coming from?', 'Can you show me?'],
+      roi:['What\'s the ROI on that?', 'And that translates to revenue how?'],
+      existing:['We already have an SEO agency. Why would I need another one?'],
+      dismissive:['AI search doesn\'t really matter for us.'],
+      price:['What\'s this going to cost?'],
+      timing:['Not a great time. Can you email me?'],
+    },
+  },
+  cmo: {
+    label:'CMO',
+    voiceHint:'strategic',
+    opening:'This is Marcus. I have fifteen minutes before my next meeting.',
+    resistance:{
+      evidence:['What\'s the source on that?', 'Show me the data.'],
+      roi:['How does this move my pipeline number?'],
+      existing:['We have teams on this. Convince me it\'s not redundant.'],
+      dismissive:['I\'m not sure AI search is a priority this quarter.'],
+      price:['Budget\'s locked. What number are you thinking?'],
+      timing:['Let\'s table this.'],
+    },
+  },
+  seo_lead: {
+    label:'SEO Lead',
+    voiceHint:'technical',
+    opening:'Hey, this is Priya. What\'s up?',
+    resistance:{
+      evidence:['What platform? What prompt? What date?'],
+      roi:['I care more about methodology than ROI math, honestly.'],
+      existing:['We\'re already doing AEO work in-house.'],
+      dismissive:['We\'ve tested this. The signal is noisy.'],
+      price:['I don\'t hold the budget.'],
+      timing:['Give me a deck and I\'ll look.'],
+    },
+  },
+};
+
+const OBJECTION_TRIGGERS = [
+  { keys:['guarantee','guaranteed','definitely will','will rank'], objection:'careful_claim' },
+  { keys:['rank','ranking','outrank','number one','#1'], objection:'careful_claim' },
+  { keys:['competitor','competing','outrank'], objection:'evidence' },
+  { keys:['roi','revenue','return','roas'], objection:'roi' },
+  { keys:['we already','our agency','existing vendor','current seo'], objection:'existing' },
+  { keys:['how much','price','cost','budget'], objection:'price' },
+  { keys:['busy','later','next week','email me','send me'], objection:'timing' },
+];
+
+const BUYER_PROBES = {
+  evidence:['What platform did you observe?', 'What were the exact prompts?', 'When did you run the test?'],
+  roi:['What\'s the assumption behind that number?', 'What would have to be true for that to work?'],
+  existing:['What would you do that our current agency doesn\'t?'],
+  price:['Is that monthly or one-time?', 'What\'s included?'],
+  timing:['What specifically would you send me?'],
+  careful_claim:['Careful — I hear that from every vendor.'],
+  discovery_question:['That\'s a fair question. What do you need to know?'],
+  closing_attempt:['That\'s a reasonable next step.'],
+  fallback:['Go on.', 'Okay.', 'Hmm.', 'What else?', 'Tell me more.'],
+};
+
+function buyerRespond(learnerText, persona, difficulty) {
+  const t = learnerText.toLowerCase();
+  const p = PERSONAS[persona] || PERSONAS.marketing_director;
+
+  // Is it a question? Reward discovery.
+  const isQuestion = /\?/.test(learnerText) && (t.startsWith('what')||t.startsWith('how')||t.startsWith('when')||t.startsWith('why')||t.startsWith('who')||t.startsWith('can you')||t.startsWith('would you')||t.startsWith('could you'));
+
+  // Does it contain an unsupported claim?
+  const hasEvidenceClaim = /(observed|we ran|tested|on \w+ \d+|platform|prompt|screenshot|measured)/.test(t);
+  const hasBareClaim = /(outrank|cited|cited more|appearing|visible|rank higher|beating)/.test(t) && !hasEvidenceClaim;
+
+  // Find objection triggers
+  let objectionKey = null;
+  for (const trig of OBJECTION_TRIGGERS) {
+    if (trig.keys.some(k => t.includes(k))) { objectionKey = trig.objection; break; }
+  }
+
+  // Priority order:
+  // 1. Bare claim without evidence → demand evidence
+  if (hasBareClaim && difficulty >= 2) {
+    return pickOne(p.resistance.evidence);
+  }
+  // 2. Explicit objection
+  if (objectionKey && p.resistance[objectionKey]) {
+    return pickOne(p.resistance[objectionKey]);
+  }
+  // 3. Discovery question → reward
+  if (isQuestion) {
+    return pickOne(['That\'s a good question. ', 'Fair. ']) + pickOne(BUYER_PROBES.discovery_question);
+  }
+  // 4. Closing signal
+  if (/(next step|schedule|calendar|send you|walk you through|proposal|deck)/.test(t)) {
+    return pickOne(BUYER_PROBES.closing_attempt);
+  }
+  // 5. Fallback
+  return pickOne(BUYER_PROBES.fallback);
+}
+
+function pickOne(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ─── Toast ─────────────────────────────────────────────────── */
+let toastTimer = null;
+function toast(msg, dur = 2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ─── Router ────────────────────────────────────────────────── */
+const Router = {
+  current: 'dashboard',
+  params: {},
+
+  go(path, params = {}) {
+    const [route, ...rest] = path.replace(/^#\/?/, '').split('/');
+    this.current = route || 'dashboard';
+    this.params = { segments: rest, ...params };
+    location.hash = '#/' + this.current + (rest.length ? '/' + rest.join('/') : '');
+    render();
+    window.scrollTo(0, 0);
+  },
+
+  parse() {
+    const raw = location.hash.replace(/^#\/?/, '');
+    const [route, ...rest] = raw.split('/');
+    this.current = route || (Store.user() ? 'dashboard' : 'landing');
+    this.params = { segments: rest };
+  },
+};
+
+/* ─── Views ─────────────────────────────────────────────────── */
+const Views = {};
+
+// ── Landing ──────────────────────────────────────────────────
+Views.landing = () => {
+  const user = Store.user();
+  if (user) { Router.go('dashboard'); return ''; }
+  return `
+    <div class="auth-wrap" style="text-align:center">
+      <p class="eyebrow">Corporate Curators</p>
+      <h1 style="font-size:52px;color:var(--gold);margin-top:12px;letter-spacing:.02em">AEO 9</h1>
+      <p class="eyebrow" style="margin-top:8px">AI SEO Academy</p>
+      <p class="sub" style="margin-top:8px">Curating Careers Since 2026</p>
+      <p class="sub" style="margin-top:36px;line-height:1.7;max-width:340px;margin-left:auto;margin-right:auto">
+        Train to diagnose AI search visibility, run AI-ZMOT audits, sell consultatively,
+        and earn verifiable credentials.
+      </p>
+      <p style="color:var(--gold);margin-top:24px;font-size:13px;letter-spacing:.15em;text-transform:uppercase">Proof Before Pitch</p>
+      <div style="margin-top:44px;display:flex;flex-direction:column;gap:12px">
+        <button class="btn btn-primary btn-lg btn-block" onclick="Router.go('signup')">Create account</button>
+        <button class="btn btn-lg btn-block" onclick="Router.go('login')">Sign in</button>
+      </div>
+      <div style="margin-top:36px;display:flex;gap:20px;justify-content:center;font-size:12px">
+        <a href="#/verify">Verify a credential</a>
+        <a href="#/learn">Browse curriculum</a>
+      </div>
+    </div>
+  `;
+};
+
+// ── Signup ────────────────────────────────────────────────────
+Views.signup = () => `
+  <div class="auth-wrap">
+    <div style="text-align:center;margin-bottom:32px">
+      <p class="eyebrow">Corporate Curators</p>
+      <h2 style="color:var(--gold);font-size:28px;margin-top:6px">AEO 9</h2>
+    </div>
+    <h3 style="margin-bottom:20px">Create account</h3>
+    <div class="field">
+      <label>Full name</label>
+      <input id="su-name" type="text" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="su-email" type="email" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password (min 10 characters)</label>
+      <input id="su-password" type="password" autocomplete="new-password">
+    </div>
+    <div id="su-error" style="color:var(--red);font-size:12px;min-height:1em;margin-bottom:12px"></div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="doSignup()">Create account</button>
+    <p style="text-align:center;font-size:12px;color:var(--text-mute);margin-top:20px">
+      Have an account? <a href="#/login">Sign in</a>
+    </p>
+    <p style="font-size:10px;color:var(--text-mute);margin-top:16px;line-height:1.6;text-align:center">
+      Recording features require explicit consent before each session.
+    </p>
+  </div>
+`;
+
+async function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim().toLowerCase();
+  const password = document.getElementById('su-password').value;
+  const err = document.getElementById('su-error');
+
+  if (!name) { err.textContent = 'Name required.'; return; }
+  if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = 'Valid email required.'; return; }
+  if (password.length < 10) { err.textContent = 'Password must be at least 10 characters.'; return; }
+  if (Store.data.users.some(u => u.email === email)) { err.textContent = 'An account already exists for this email.'; return; }
+
+  const hash = await Crypto.hashPassword(password);
+  const user = { id: Store.uid(), name, email, passwordHash: hash, role: 'STUDENT', createdAt: Date.now() };
+  Store.data.users.push(user);
+  Store.data.session = { userId: user.id };
+  Store.save();
+  toast('Welcome to AEO 9');
+  Router.go('dashboard');
+}
+
+// ── Login ─────────────────────────────────────────────────────
+Views.login = () => `
+  <div class="auth-wrap">
+    <div style="text-align:center;margin-bottom:32px">
+      <p class="eyebrow">Corporate Curators</p>
+      <h2 style="color:var(--gold);font-size:28px;margin-top:6px">AEO 9</h2>
+    </div>
+    <h3 style="margin-bottom:20px">Sign in</h3>
+    <div class="field">
+      <label>Email</label>
+      <input id="li-email" type="email" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="li-password" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="li-error" style="color:var(--red);font-size:12px;min-height:1em;margin-bottom:12px"></div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="doLogin()">Sign in</button>
+    <p style="text-align:center;font-size:12px;color:var(--text-mute);margin-top:20px">
+      No account? <a href="#/signup">Create one</a>
+    </p>
+  </div>
+`;
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const password = document.getElementById('li-password').value;
+  const err = document.getElementById('li-error');
+  const user = Store.data.users.find(u => u.email === email);
+  if (!user) { err.textContent = 'Invalid email or password.'; return; }
+  const hash = await Crypto.hashPassword(password);
+  if (hash !== user.passwordHash) { err.textContent = 'Invalid email or password.'; return; }
+  Store.data.session = { userId: user.id };
+  Store.save();
+  toast('Welcome back');
+  Router.go('dashboard');
+}
+
+function doLogout() {
+  Store.data.session = null;
+  Store.save();
+  Router.go('landing');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+Views.dashboard = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+
+  const progress = Store.progress(user.id);
+  const completed = Object.keys(progress).length;
+  const totalLessons = COURSES.reduce((n, c) => n + c.modules.reduce((m, mod) => m + mod.lessons.length, 0), 0);
+  const pct = totalLessons ? Math.round((completed / totalLessons) * 100) : 0;
+
+  const creds = Store.data.credentials.filter(c => c.userId === user.id);
+  const attempts = Store.attempts(user.id);
+  const voiceSessions = Store.data.voiceSessions.filter(v => v.userId === user.id && v.endedAt);
+  const scored = voiceSessions.filter(v => v.score);
+  const avgVoice = scored.length ? Math.round(scored.reduce((n, v) => n + v.score.overall, 0) / scored.length) : null;
+
+  const recent = Object.keys(progress).slice(-5).map(id => {
+    for (const c of COURSES) for (const m of c.modules) for (const l of m.lessons) if (l.id === id) return { course: c.title, lesson: l.title };
+    return null;
+  }).filter(Boolean).reverse();
+
+  return `
+    <h1>Dashboard</h1>
+    <p class="sub">Welcome back, ${esc(user.name)}.</p>
+
+    <div class="grid grid-3" style="margin-top:28px">
+      <div class="stat">
+        <div class="stat-label">Lessons completed</div>
+        <div class="stat-value">${completed} <span style="font-size:14px;color:var(--text-mute)">/ ${totalLessons}</span></div>
+        <div class="stat-sub">${pct}% of curriculum</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Credentials earned</div>
+        <div class="stat-value">${creds.length}</div>
+        <div class="stat-sub">${creds.length === 0 ? 'None yet' : `Highest: L${Math.max(...creds.map(c => c.level))}`}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Voice training</div>
+        <div class="stat-value">${avgVoice !== null ? avgVoice : '—'}</div>
+        <div class="stat-sub">${voiceSessions.length} session${voiceSessions.length === 1 ? '' : 's'} · ${scored.length} scored</div>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:32px">
+      <h2>Recent activity</h2>
+      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="Router.go('learn')">Browse catalog</button>
+    </div>
+
+    ${recent.length === 0 ? `
+      <div class="empty">
+        Nothing yet. <a href="#/learn">Start with the catalog.</a>
+      </div>
+    ` : `
+      <div class="list">
+        ${recent.map(r => `
+          <div class="list-item" style="cursor:default">
+            <span style="color:var(--text-mute);font-size:12px;flex:1">${esc(r.course)}</span>
+            <span style="font-size:13px">${esc(r.lesson)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `}
+
+    <div class="section-head" style="margin-top:32px">
+      <h2>Jump back in</h2>
+    </div>
+    <div class="grid grid-3">
+      <button class="card card-link" style="text-align:left" onclick="Router.go('learn')">
+        <div class="eyebrow">Learn</div>
+        <div style="font-size:15px;margin-top:6px">Continue the curriculum</div>
+      </button>
+      <button class="card card-link" style="text-align:left" onclick="Router.go('voice')">
+        <div class="eyebrow">Voice</div>
+        <div style="font-size:15px;margin-top:6px">Practice a sales call</div>
+      </button>
+      <button class="card card-link" style="text-align:left" onclick="Router.go('prospects')">
+        <div class="eyebrow">Prospects</div>
+        <div style="font-size:15px;margin-top:6px">Research a company</div>
+      </button>
+    </div>
+  `;
+};
+
+// ── Learn ─────────────────────────────────────────────────────
+Views.learn = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const progress = Store.progress(user.id);
+
+  // Group courses by school
+  const bySchool = new Map();
+  for (const c of COURSES) {
+    if (!bySchool.has(c.school)) bySchool.set(c.school, []);
+    bySchool.get(c.school).push(c);
+  }
+
+  const cards = COURSES.map(c => {
+    const total = c.modules.reduce((n, m) => n + m.lessons.length, 0);
+    const done = c.modules.reduce((n, m) => n + m.lessons.filter(l => progress[l.id]).length, 0);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return `
+      <div class="card card-link" onclick="Router.go('course/${c.slug}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <h3>${esc(c.title)}</h3>
+          <span class="tag tag-UNKNOWN">L${c.level}</span>
+        </div>
+        <p class="sub" style="font-size:12px;margin-top:4px">${esc(c.theme)}</p>
+        <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <p class="sub" style="font-size:11px;margin-top:6px">${done} / ${total} · ${pct}%</p>
+      </div>
+    `;
+  }).join('');
+
+  // Also list the 30 schools as a directory
+  const schoolsList = SCHOOLS.map(s => {
+    const hasCourse = COURSES.some(c => c.school === s.n);
+    return `
+      <div class="list-item" style="cursor:default;opacity:${hasCourse ? 1 : 0.5}">
+        <span class="mono" style="color:${hasCourse ? 'var(--gold)' : 'var(--text-mute)'}">${String(s.n).padStart(2, '0')}</span>
+        <span style="flex:1">${esc(s.name)}</span>
+        <span style="font-size:11px;color:var(--text-mute)">${hasCourse ? 'active' : 'planned'}</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <h1>Learn</h1>
+    <p class="sub">Thirty schools. One professional path.</p>
+
+    <div class="section-head" style="margin-top:24px">
+      <h2>Available courses</h2>
+    </div>
+    ${COURSES.length === 0 ? `<div class="empty">No courses yet.</div>` : `<div class="grid grid-2">${cards}</div>`}
+
+    <div class="section-head" style="margin-top:32px">
+      <h2>School directory</h2>
+    </div>
+    <div class="list">${schoolsList}</div>
+  `;
+};
+
+// ── Course detail ─────────────────────────────────────────────
+Views.course = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const slug = Router.params.segments[0];
+  const c = COURSES.find(x => x.slug === slug);
+  if (!c) return `<p>Course not found. <a href="#/learn">Back to catalog</a></p>`;
+  const progress = Store.progress(user.id);
+
+  const modules = c.modules.map((m, mi) => `
+    <div style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)">
+        ${mi + 1}. ${esc(m.title)}
+      </h3>
+      <div class="list">
+        ${m.lessons.map(l => `
+          <div class="list-item" onclick="Router.go('lesson/${c.slug}/${l.id}')">
+            <span class="lesson-check ${progress[l.id] ? 'done' : ''}"></span>
+            <span style="flex:1">${esc(l.title)}</span>
+            <span style="color:var(--text-mute)">→</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <a href="#/learn" style="font-size:12px;color:var(--text-mute)">← All courses</a>
+    <h1 style="margin-top:16px">${esc(c.title)}</h1>
+    <p class="sub">Theme: <span style="color:var(--gold)">${esc(c.theme)}</span></p>
+    <div style="margin-top:32px">${modules}</div>
+  `;
+};
+
+// ── Lesson ────────────────────────────────────────────────────
+Views.lesson = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const [courseSlug, lessonId] = Router.params.segments;
+  const c = COURSES.find(x => x.slug === courseSlug);
+  if (!c) return `<p>Not found.</p>`;
+  const flat = c.modules.flatMap(m => m.lessons.map(l => ({ ...l, moduleTitle: m.title })));
+  const idx = flat.findIndex(l => l.id === lessonId);
+  if (idx < 0) return `<p>Lesson not found.</p>`;
+  const lesson = flat[idx];
+  const progress = Store.progress(user.id);
+  const done = !!progress[lesson.id];
+  const prev = idx > 0 ? flat[idx - 1] : null;
+  const next = idx < flat.length - 1 ? flat[idx + 1] : null;
+
+  return `
+    <a href="#/course/${c.slug}" style="font-size:12px;color:var(--text-mute)">← ${esc(c.title)}</a>
+    <p class="eyebrow" style="margin-top:16px">${esc(lesson.moduleTitle)}</p>
+    <h1 style="margin-top:8px">${esc(lesson.title)}</h1>
+
+    <div style="margin-top:32px;max-width:680px;white-space:pre-wrap;line-height:1.75;color:var(--text);font-size:15px">${esc(lesson.content)}</div>
+
+    <div style="margin-top:44px;padding-top:20px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <button class="btn ${done ? '' : 'btn-primary'}" onclick="toggleLesson('${c.slug}','${lesson.id}')">
+        ${done ? '✓ Completed — undo' : 'Mark complete'}
+      </button>
+      <div style="display:flex;gap:10px">
+        ${prev ? `<button class="btn" onclick="Router.go('lesson/${c.slug}/${prev.id}')">← Prev</button>` : ''}
+        ${next ? `<button class="btn" onclick="Router.go('lesson/${c.slug}/${next.id}')">Next →</button>` : ''}
+      </div>
+    </div>
+  `;
+};
+
+function toggleLesson(courseSlug, lessonId) {
+  const user = Store.user();
+  if (!user) return;
+  const progress = Store.progress(user.id);
+  if (progress[lessonId]) delete progress[lessonId];
+  else progress[lessonId] = Date.now();
+  Store.save();
+  render();
+}
+
+// ── Assessments ───────────────────────────────────────────────
+Views.assessments = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const attempts = Store.attempts(user.id);
+
+  const cards = ASSESSMENTS.map(a => {
+    const mine = attempts.filter(x => x.assessmentSlug === a.slug);
+    const passed = mine.find(x => x.passed);
+    const best = mine.length ? Math.max(...mine.map(x => x.score)) : null;
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <h3>${esc(a.title)}</h3>
+          <span class="tag tag-UNKNOWN">L${a.level}</span>
+        </div>
+        <p class="sub" style="font-size:12px;margin-top:6px">
+          ${a.questions.length} questions · passing ${a.passing}%
+        </p>
+        ${passed ? `<p style="color:var(--green);font-size:12px;margin-top:10px">✓ Passed — ${passed.score}%</p>` :
+          best !== null ? `<p style="color:var(--amber);font-size:12px;margin-top:10px">Best: ${best}% — not passed</p>` :
+          `<p style="color:var(--text-mute);font-size:12px;margin-top:10px">Not attempted</p>`}
+        <button class="btn btn-primary" style="margin-top:14px" onclick="startAttempt('${a.slug}')">
+          ${passed ? 'Retake' : 'Start assessment'}
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <h1>Assessments</h1>
+    <p class="sub">Credentials are earned, not completed.</p>
+    <div class="grid grid-2" style="margin-top:24px">${cards}</div>
+  `;
+};
+
+function startAttempt(slug) {
+  const a = ASSESSMENTS.find(x => x.slug === slug);
+  if (!a) return;
+  // Store attempt-in-progress in session storage
+  sessionStorage.setItem('aeo9.attempt', JSON.stringify({
+    assessmentSlug: slug,
+    startedAt: Date.now(),
+    responses: {},
+  }));
+  Router.go('attempt/' + slug);
+}
+
+Views.attempt = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const slug = Router.params.segments[0];
+  const a = ASSESSMENTS.find(x => x.slug === slug);
+  if (!a) return `<p>Assessment not found.</p>`;
+  const raw = sessionStorage.getItem('aeo9.attempt');
+  if (!raw) { Router.go('assessments'); return ''; }
+  const state = JSON.parse(raw);
+  if (state.assessmentSlug !== slug) { Router.go('assessments'); return ''; }
+
+  const qs = a.questions.map((q, i) => {
+    const resp = state.responses[q.id] || {};
+    let body = '';
+    if (q.type === 'mcq' || q.type === 'multi') {
+      body = q.options.map(o => {
+        const selected = (resp.selected || []).includes(o.id);
+        return `
+          <label class="choice ${selected ? 'selected' : ''}" onclick="setAttemptResponse('${q.id}','${o.id}','${q.type}')">
+            <input type="${q.type === 'mcq' ? 'radio' : 'checkbox'}" ${selected ? 'checked' : ''} onclick="event.preventDefault()">
+            <span>${esc(o.text)}</span>
+          </label>
+        `;
+      }).join('');
+    } else {
+      body = `<textarea rows="7" placeholder="Write your response..." oninput="setWrittenResponse('${q.id}', this.value)">${esc(resp.text || '')}</textarea>`;
+    }
+    return `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <span class="eyebrow">Q${i + 1} · ${q.type === 'written' ? 'Written' : q.type === 'multi' ? 'Select all' : 'Select one'}</span>
+          <span class="eyebrow">${q.pts} pt${q.pts > 1 ? 's' : ''}</span>
+        </div>
+        <p style="white-space:pre-wrap;margin-bottom:14px;font-size:14px">${esc(q.prompt)}</p>
+        ${body}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <a href="#/assessments" style="font-size:12px;color:var(--text-mute)">← Assessments</a>
+    <h1 style="margin-top:16px">${esc(a.title)}</h1>
+    <p class="sub">Attempt in progress</p>
+    <div style="margin-top:24px">${qs}</div>
+    <button class="btn btn-primary btn-lg" style="margin-top:12px" onclick="submitAttempt('${a.slug}')">Submit for grading</button>
+  `;
+};
+
+function setAttemptResponse(qid, oid, type) {
+  const state = JSON.parse(sessionStorage.getItem('aeo9.attempt'));
+  const resp = state.responses[qid] || { selected: [] };
+  if (type === 'mcq') resp.selected = [oid];
+  else {
+    const set = new Set(resp.selected || []);
+    if (set.has(oid)) set.delete(oid); else set.add(oid);
+    resp.selected = [...set];
+  }
+  state.responses[qid] = resp;
+  sessionStorage.setItem('aeo9.attempt', JSON.stringify(state));
+  render();
+}
+
+function setWrittenResponse(qid, text) {
+  const state = JSON.parse(sessionStorage.getItem('aeo9.attempt'));
+  state.responses[qid] = { text };
+  sessionStorage.setItem('aeo9.attempt', JSON.stringify(state));
+}
+
+async function submitAttempt(slug) {
+  const user = Store.user();
+  const a = ASSESSMENTS.find(x => x.slug === slug);
+  const state = JSON.parse(sessionStorage.getItem('aeo9.attempt'));
+  if (!a || !state) return;
+
+  let earned = 0, total = 0;
+  const graded = [];
+
+  for (const q of a.questions) {
+    total += q.pts;
+    const resp = state.responses[q.id] || {};
+    let pts = 0, feedback = '';
+
+    if (q.type === 'mcq' || q.type === 'multi') {
+      const sel = resp.selected || [];
+      const correct = q.correct || [];
+      const isCorrect = sel.length === correct.length && sel.every(s => correct.includes(s));
+      pts = isCorrect ? q.pts : 0;
+      feedback = isCorrect ? 'Correct.' : 'Not quite.';
+    } else {
+      const text = (resp.text || '').toLowerCase();
+      if (!text || text.length < 20) { pts = 0; feedback = 'Response too short to grade.'; }
+      else {
+        // Simple heuristic grading based on keyword/anti-keyword presence
+        const kwHits = (q.keywords || []).filter(k => text.includes(k)).length;
+        const antiHits = (q.antiKeywords || []).filter(k => text.includes(k)).length;
+        const kwRatio = (q.keywords || []).length ? kwHits / q.keywords.length : 0;
+        let base = Math.round(kwRatio * q.pts);
+        base = Math.max(0, base - antiHits * 3);
+        pts = Math.min(q.pts, base);
+        feedback = `Covered ${kwHits}/${(q.keywords||[]).length} rubric points.${antiHits ? ' Fabricated-statistic language detected.' : ''}`;
+      }
+    }
+    earned += pts;
+    graded.push({ questionId: q.id, points: pts, maxPoints: q.pts, feedback, response: resp });
+  }
+
+  const scorePct = total ? Math.round((earned / total) * 100) : 0;
+  const passed = scorePct >= a.passing;
+
+  const attempt = {
+    id: Store.uid(),
+    assessmentSlug: slug,
+    userId: user.id,
+    score: scorePct,
+    passed,
+    submittedAt: Date.now(),
+    responses: graded,
+  };
+  Store.attempts(user.id).push(attempt);
+  Store.save();
+
+  // Issue credential if passed
+  if (passed) await issueCredential(user.id, a, attempt);
+
+  sessionStorage.removeItem('aeo9.attempt');
+  Router.go('result/' + attempt.id);
+}
+
+// ── Result ────────────────────────────────────────────────────
+Views.result = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const id = Router.params.segments[0];
+  const attempt = Store.attempts(user.id).find(x => x.id === id);
+  if (!attempt) return `<p>Attempt not found.</p>`;
+  const a = ASSESSMENTS.find(x => x.slug === attempt.assessmentSlug);
+  const cred = Store.data.credentials.find(c => c.attemptId === attempt.id);
+
+  return `
+    <a href="#/assessments" style="font-size:12px;color:var(--text-mute)">← Assessments</a>
+    <h1 style="margin-top:16px">${esc(a.title)}</h1>
+    <p class="sub">Result</p>
+
+    <div class="card" style="margin-top:24px;border-color:${attempt.passed ? 'var(--gold-dim)' : 'var(--red-line)'};background:${attempt.passed ? 'rgba(212,175,55,.05)' : 'var(--red-bg)'}">
+      <div style="display:flex;align-items:baseline;gap:16px">
+        <span style="font-size:52px;font-weight:300;color:${attempt.passed ? 'var(--gold)' : 'var(--red)'}">${attempt.score}%</span>
+        <span style="font-size:13px;color:var(--text-mute)">${attempt.passed ? 'Passed' : `Below passing (${a.passing}%)`}</span>
+      </div>
+      ${cred ? `
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gold-dim)">
+          <p class="eyebrow" style="color:var(--gold)">Credential Issued</p>
+          <p style="margin-top:6px;font-size:17px">${esc(cred.title)}</p>
+          <p class="mono" style="color:var(--text-mute);margin-top:6px">SHA-256: ${cred.digestSha256.slice(0, 32)}…</p>
+          <button class="btn btn-primary" style="margin-top:14px" onclick="Router.go('verify/${cred.verifyToken}')">View public verification →</button>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="section-head" style="margin-top:32px"><h2>Per-question feedback</h2></div>
+    <div class="list">
+      ${attempt.responses.map((r, i) => {
+        const q = a.questions.find(x => x.id === r.questionId);
+        return `
+          <div class="card">
+            <p class="eyebrow">Q${i + 1}</p>
+            <p style="margin-top:6px;font-size:13px;color:var(--text-dim)">${esc(q.prompt.slice(0, 140))}${q.prompt.length > 140 ? '…' : ''}</p>
+            <p style="margin-top:10px;font-size:13px"><span style="color:var(--gold)">${r.points}</span> <span style="color:var(--text-mute)">/ ${r.maxPoints} pts</span></p>
+            ${r.feedback ? `<p style="margin-top:6px;font-size:12px;color:var(--text-dim)">${esc(r.feedback)}</p>` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:10px">
+      <button class="btn" onclick="Router.go('assessments')">Assessments</button>
+      <button class="btn btn-primary" onclick="Router.go('credentials')">My credentials</button>
+    </div>
+  `;
+};
+
+// ── Credentials ───────────────────────────────────────────────
+async function issueCredential(userId, assessment, attempt) {
+  const credentialId = 'c_' + Store.uid();
+  const verifyToken = Crypto.randomToken(16);
+  const issuedAt = new Date().toISOString();
+
+  const payload = {
+    '@context': 'https://aeo9.local/credentials/v1',
+    id: 'urn:aeo9:credential:' + credentialId,
+    issuer: 'AEO 9 · Corporate Curators',
+    holder: { id: 'urn:aeo9:user:' + userId },
+    level: assessment.level,
+    title: assessment.title,
+    issuedAt,
+    evidence: { assessmentSlug: assessment.slug, score: attempt.score },
+  };
+
+  const canonical = Crypto.canonicalize(payload);
+  const digestSha256 = await Crypto.sha256(canonical);
+
+  Store.data.credentials.push({
+    id: credentialId,
+    userId,
+    level: assessment.level,
+    title: assessment.title,
+    issuedAt,
+    payload,
+    digestSha256,
+    verifyToken,
+    status: 'ACTIVE',
+    attemptId: attempt.id,
+    evidence: payload.evidence,
+  });
+  Store.save();
+}
+
+const LADDER = [
+  { level:1,  title:'AI Search Foundations',                    requires:'ai-search-foundations' },
+  { level:2,  title:'AEO Practitioner',                         requires:null },
+  { level:3,  title:'GEO Practitioner',                         requires:null },
+  { level:4,  title:'LLM Visibility Analyst',                   requires:null },
+  { level:5,  title:'AI Search Strategist',                     requires:null },
+  { level:6,  title:'AI Advertising Specialist',                requires:null },
+  { level:7,  title:'AI Solutions Consultant',                  requires:null },
+  { level:8,  title:'AI Search & LLM Optimization Professional',requires:null },
+  { level:9,  title:'AI Search Architect',                      requires:null },
+  { level:10, title:'AI SEO Master Practitioner',               requires:null },
+];
+
+Views.credentials = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const creds = Store.data.credentials.filter(c => c.userId === user.id);
+
+  const rows = LADDER.map(rung => {
+    const cred = creds.find(c => c.level === rung.level);
+    return `
+      <div class="card" style="border-color:${cred ? 'var(--gold-dim)' : 'var(--line)'};background:${cred ? 'rgba(212,175,55,.05)' : 'var(--obsidian-50)'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="mono" style="color:${cred ? 'var(--gold)' : 'var(--text-mute)'}">L${rung.level}</span>
+              <h3 style="color:${cred ? 'var(--gold)' : 'var(--text)'}">${esc(rung.title)}</h3>
+            </div>
+          </div>
+          ${cred
+            ? `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="Router.go('verify/${cred.verifyToken}')">Verify</button>`
+            : `<span class="eyebrow">Locked</span>`}
+        </div>
+        ${cred ? `<p class="mono" style="color:var(--text-mute);margin-top:10px">Issued ${cred.issuedAt.slice(0,10)} · SHA-256 ${cred.digestSha256.slice(0, 16)}…</p>` : ''}
+        ${!cred && rung.requires ? `<button class="btn" style="margin-top:12px;font-size:12px" onclick="startAttempt('${rung.requires}')">Take assessment →</button>` : ''}
+        ${!cred && !rung.requires ? `<p class="sub" style="font-size:11px;margin-top:8px">Not yet available in this build.</p>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <h1>Credential Ladder</h1>
+    <p class="sub">${creds.length} of ${LADDER.length} earned. Credentials require demonstrated competency — not completion.</p>
+    <div class="list" style="margin-top:24px">${rows}</div>
+  `;
+};
+
+// ── Public verify ─────────────────────────────────────────────
+Views.verify = () => {
+  const token = Router.params.segments[0];
+  if (!token) {
+    return `
+      <div style="max-width:520px;margin:0 auto;text-align:center;padding-top:40px">
+        <p class="eyebrow">AEO 9</p>
+        <h1 style="color:var(--gold);margin-top:8px">Credential Verification</h1>
+        <p class="sub" style="margin-top:12px">Enter a credential token to verify.</p>
+        <div class="field" style="margin-top:20px">
+          <input id="verify-token" placeholder="Credential token" onkeydown="if(event.key==='Enter')gotoVerify()">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="gotoVerify()">Verify</button>
+      </div>
+    `;
+  }
+
+  const cred = Store.data.credentials.find(c => c.verifyToken === token);
+  if (!cred) {
+    return `
+      <div style="max-width:520px;margin:0 auto;text-align:center;padding-top:40px">
+        <div class="alert alert-danger">Credential not found.</div>
+        <button class="btn" onclick="Router.go('verify')">Try another</button>
+      </div>
+    `;
+  }
+
+  const user = Store.data.users.find(u => u.id === cred.userId);
+  const isActive = cred.status === 'ACTIVE';
+
+  return `
+    <div style="max-width:600px;margin:0 auto;padding-top:24px">
+      <div style="text-align:center;margin-bottom:32px">
+        <p class="eyebrow">Corporate Curators</p>
+        <h1 style="color:var(--gold);margin-top:8px;font-size:26px">AEO 9 Credential</h1>
+      </div>
+
+      <div class="card" style="border-color:${isActive ? 'var(--gold-dim)' : 'var(--red-line)'};background:${isActive ? 'rgba(212,175,55,.04)' : 'var(--red-bg)'};padding:28px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:10px;height:10px;border-radius:50%;background:${isActive ? 'var(--green)' : 'var(--red)'}"></span>
+          <span class="eyebrow">${isActive ? 'Active' : cred.status}</span>
+        </div>
+        <h2 style="margin-top:20px;font-size:22px;font-weight:300">${esc(cred.title)}</h2>
+        <p class="sub">Level ${cred.level}</p>
+
+        <dl style="margin-top:24px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)">
+            <dt style="color:var(--text-mute)">Holder</dt>
+            <dd>${esc(user?.name || 'Anonymous learner')}</dd>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)">
+            <dt style="color:var(--text-mute)">Issuer</dt>
+            <dd>AEO 9 · Corporate Curators</dd>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)">
+            <dt style="color:var(--text-mute)">Issued</dt>
+            <dd>${cred.issuedAt.slice(0,10)}</dd>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0">
+            <dt style="color:var(--text-mute)">Assessment score</dt>
+            <dd>${cred.evidence?.score ?? '—'}%</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <p class="eyebrow" style="margin-bottom:12px">Integrity</p>
+        <p style="font-size:11px;color:var(--text-mute);margin-bottom:6px">SHA-256 digest</p>
+        <code class="mono" style="display:block;background:var(--obsidian-100);padding:10px;border-radius:4px;word-break:break-all;font-size:11px">${cred.digestSha256}</code>
+
+        <div class="alert alert-warn" style="margin-top:16px;margin-bottom:0;font-size:11px;line-height:1.6">
+          <strong>What this proves — and what it does not</strong><br>
+          The SHA-256 digest proves the credential payload has not changed since issuance.<br>
+          This is <strong>not</strong> a public-key digital signature. A third party cannot independently verify this credential without contacting this device. W3C Verifiable Credentials compliance is not claimed.
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+function gotoVerify() {
+  const t = document.getElementById('verify-token').value.trim();
+  if (t) Router.go('verify/' + t);
+}
+
+// ── Voice Simulator ───────────────────────────────────────────
+Views.voice = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+
+  const active = Voice.active;
+  if (active) return renderVoiceSession(active);
+
+  const sessions = Store.data.voiceSessions.filter(v => v.userId === user.id).reverse();
+  const usage = Store.usage(user.id).filter(u => u.kind === 'voice');
+  const today = usage.filter(u => new Date(u.at).toDateString() === new Date().toDateString());
+  const usedSec = today.reduce((n, u) => n + u.seconds, 0);
+  const budget = Store.data.budget.dailyVoiceSeconds;
+
+  const scenes = [
+    { id:'COLD_CALL', label:'Cold Call', desc:'First contact. Earn the next step.' },
+    { id:'DISCOVERY', label:'Discovery', desc:'Ask good questions. Map the problem.' },
+    { id:'OBJECTION', label:'Objection Handling', desc:'The buyer pushes back.' },
+    { id:'CONSULTATION', label:'AI SEO Consultation', desc:'Diagnose. Recommend. Guide.' },
+    { id:'CLOSING', label:'Closing', desc:'Ask for the business.' },
+  ];
+
+  return `
+    <h1>Voice Training</h1>
+    <p class="sub">Live sales simulation using your browser's speech engine. Real STT and TTS — no API key required.</p>
+
+    <div class="grid grid-3" style="margin-top:24px">
+      <div class="stat">
+        <div class="stat-label">Sessions</div>
+        <div class="stat-value">${sessions.length}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Voice today</div>
+        <div class="stat-value">${Math.round(usedSec/60)} <span style="font-size:13px;color:var(--text-mute)">/ ${Math.round(budget/60)} min</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Budget</div>
+        <div class="stat-value" style="color:${usedSec/budget > 0.9 ? 'var(--red)' : usedSec/budget > 0.75 ? 'var(--amber)' : 'var(--green)'}">
+          ${usedSec/budget > 0.9 ? 'RED' : usedSec/budget > 0.75 ? 'YELLOW' : 'GREEN'}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:32px"><h2>New session</h2></div>
+    <div class="grid grid-2">
+      ${scenes.map(s => `
+        <div class="card card-link" onclick="startVoiceCall('${s.id}')">
+          <h3>${esc(s.label)}</h3>
+          <p class="sub" style="font-size:12px">${esc(s.desc)}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    ${sessions.length > 0 ? `
+      <div class="section-head" style="margin-top:32px"><h2>Past sessions</h2></div>
+      <div class="list">
+        ${sessions.slice(0, 10).map(v => `
+          <div class="list-item" onclick="Router.go('voice-score/${v.id}')">
+            <span style="flex:1">${esc(v.scenario.replace('_',' '))} · ${esc(PERSONAS[v.persona]?.label || v.persona)}</span>
+            <span style="color:var(--gold)">${v.score ? v.score.overall : '—'}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    <div class="alert alert-info" style="margin-top:32px;font-size:12px">
+      <strong>Browser support note:</strong> Speech recognition is supported in Chrome, Edge, and Safari. Firefox lacks native STT — the simulator falls back to typing in that case.
+    </div>
+  `;
+};
+
+function startVoiceCall(scenario) {
+  const user = Store.user();
+  const session = {
+    id: Store.uid(),
+    userId: user.id,
+    scenario,
+    persona: 'marketing_director',
+    difficulty: 3,
+    turns: [],
+    startedAt: Date.now(),
+    endedAt: null,
+    score: null,
+  };
+  Store.data.voiceSessions.push(session);
+  Store.save();
+
+  Voice.active = session;
+  Voice.recognition = null;
+  Voice.synth = window.speechSynthesis;
+  Voice.listening = false;
+  Voice.speaking = false;
+  Voice.startTime = Date.now();
+
+  render();
+  // Buyer opens
+  setTimeout(() => speakBuyer(session, PERSONAS[session.persona].opening), 400);
+}
+
+function renderVoiceSession(session) {
+  const turns = session.turns.map(t => `
+    <div class="turn ${t.who}">
+      <span class="turn-who">${t.who === 'learner' ? 'You' : 'Buyer'}:</span>
+      <span>${esc(t.text)}</span>
+    </div>
+  `).join('');
+
+  const status = Voice.speaking ? 'speaking' : Voice.listening ? 'listening' : Voice.thinking ? 'thinking' : 'idle';
+  const statusLabel = { speaking:'Buyer speaking', listening:'Listening', thinking:'Thinking', idle:'Tap to speak' }[status];
+
+  return `
+    <div style="max-width:640px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p class="eyebrow">${esc(session.scenario.replace('_',' '))}</p>
+          <h2 style="margin-top:4px">${esc(PERSONAS[session.persona].label)}</h2>
+        </div>
+        <button class="btn btn-danger" onclick="endVoiceCall()">End</button>
+      </div>
+
+      <div class="call-status" style="margin-top:20px">
+        <span class="pulse ${status}"></span>
+        <span>${statusLabel}</span>
+      </div>
+
+      <div class="transcript" id="voice-transcript">
+        ${turns || '<p style="color:var(--text-mute);font-size:13px;text-align:center">Call connecting…</p>'}
+      </div>
+
+      <div id="voice-controls" style="display:flex;flex-direction:column;gap:12px;align-items:center">
+        ${Voice.speaking
+          ? `<button class="btn btn-lg btn-block" onclick="interruptBuyer()" style="max-width:280px">Interrupt</button>`
+          : Voice.listening
+            ? `<button class="btn btn-primary btn-lg btn-block" onclick="stopListening()" style="max-width:280px">● Listening — tap to send</button>`
+            : `<button class="btn btn-primary btn-lg btn-block" onclick="startListening()" style="max-width:280px">🎤 Speak</button>`}
+        <button class="btn" style="font-size:12px" onclick="showTypeFallback()">Type instead</button>
+      </div>
+
+      <div id="type-fallback" style="display:none;margin-top:16px">
+        <textarea id="type-input" rows="2" placeholder="Type what you'd say..." style="margin-bottom:8px"></textarea>
+        <button class="btn btn-primary" onclick="sendTyped()">Send</button>
+      </div>
+    </div>
+  `;
+}
+
+const Voice = { active: null, recognition: null, synth: null, listening: false, speaking: false, thinking: false, startTime: 0 };
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showTypeFallback(); return; }
+
+  const rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = true;
+  rec.continuous = false;
+  Voice.recognition = rec;
+  Voice.listening = true;
+  Voice.finalText = '';
+
+  rec.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    if (final) Voice.finalText += final;
+    // Live preview via toast
+    if (interim || final) toast(Voice.finalText + interim, 100000);
+  };
+
+  rec.onerror = (e) => {
+    Voice.listening = false;
+    toast('Microphone error: ' + e.error);
+    render();
+  };
+
+  rec.onend = () => {
+    Voice.listening = false;
+    clearTimeout(toastTimer);
+    const text = Voice.finalText.trim();
+    if (text) handleLearnerTurn(text);
+    else { toast('No speech detected.'); render(); }
+  };
+
+  try { rec.start(); render(); }
+  catch (e) { Voice.listening = false; toast('Could not start microphone.'); render(); }
+}
+
+function stopListening() {
+  if (Voice.recognition) { try { Voice.recognition.stop(); } catch {} }
+}
+
+function interruptBuyer() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  Voice.speaking = false;
+  render();
+}
+
+function showTypeFallback() {
+  const el = document.getElementById('type-fallback');
+  el.style.display = 'block';
+  document.getElementById('type-input').focus();
+}
+
+function sendTyped() {
+  const input = document.getElementById('type-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  document.getElementById('type-fallback').style.display = 'none';
+  handleLearnerTurn(text);
+}
+
+function handleLearnerTurn(text) {
+  const session = Voice.active;
+  if (!session) return;
+  session.turns.push({ who: 'learner', text, at: Date.now() });
+  Voice.thinking = true;
+  render();
+
+  // Simulate thinking delay
+  setTimeout(() => {
+    const buyerText = buyerRespond(text, session.persona, session.difficulty);
+    session.turns.push({ who: 'buyer', text: buyerText, at: Date.now() });
+    Voice.thinking = false;
+    Store.save();
+    speakBuyer(session, buyerText);
+  }, 600 + Math.random() * 600);
+}
+
+function speakBuyer(session, text) {
+  Voice.speaking = true;
+  render();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.0;
+  u.pitch = 1.0;
+  u.lang = 'en-US';
+  // Pick a voice if one is available
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /en-US/i.test(v.lang) && /female|samantha|zira|google us/i.test(v.name)) || voices.find(v => /en-US/i.test(v.lang));
+  if (preferred) u.voice = preferred;
+
+  u.onend = () => {
+    Voice.speaking = false;
+    render();
+  };
+  u.onerror = () => {
+    Voice.speaking = false;
+    render();
+  };
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+function endVoiceCall() {
+  const session = Voice.active;
+  if (!session) return;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  session.endedAt = Date.now();
+  const seconds = Math.round((session.endedAt - session.startedAt) / 1000);
+  Store.usage(session.userId).push({ kind: 'voice', seconds, at: Date.now() });
+  session.score = scoreVoiceSession(session);
+  Store.save();
+  Voice.active = null;
+  Voice.listening = false;
+  Voice.speaking = false;
+  Voice.thinking = false;
+  Router.go('voice-score/' + session.id);
+}
+
+function scoreVoiceSession(session) {
+  const learner = session.turns.filter(t => t.who === 'learner');
+  const buyer = session.turns.filter(t => t.who === 'buyer');
+  const all = session.turns.map(t => t.text).join(' ').toLowerCase();
+
+  // Discovery: questions asked
+  const questions = learner.filter(t => /\?/.test(t.text)).length;
+  const discovery = clamp(questions * 15 + 20);
+
+  // Evidence: mentions of observation words
+  const evidenceWords = (all.match(/(observed|we ran|tested|platform|prompt|date|screenshot|measured|specific)/g) || []).length;
+  const evidenceUse = clamp(evidenceWords * 12);
+
+  // Objection handling: buyer turns that were objections, followed by learner engagement
+  const objections = buyer.filter(t => /(how do you know|prove|already have|doesn't matter|too expensive|not a good time|send me)/i.test(t.text)).length;
+  const engagements = learner.length;
+  const objectionHandling = clamp(objections ? Math.min(100, (engagements / Math.max(1, objections)) * 40) : 50);
+
+  // Closing: next step language
+  const closingMoves = (all.match(/(next step|schedule|calendar|proposal|send you|walk you through|deck)/g) || []).length;
+  const closing = clamp(closingMoves * 30);
+
+  // Unsupported claims
+  const unsupported = [];
+  for (const t of learner) {
+    const lower = t.text.toLowerCase();
+    if (/(outrank|cited more|rank higher|dominat)/.test(lower) && !/(observed|we ran|tested|platform|prompt|on \w+ \d+)/.test(lower)) {
+      unsupported.push({ quote: t.text.slice(0, 140), reason: 'Claim about AI visibility or ranking without observation evidence (platform, prompt, date).' });
+    }
+    if (/(guarantee|guaranteed|100%|definitely will)/.test(lower)) {
+      unsupported.push({ quote: t.text.slice(0, 140), reason: 'Absolute guarantee language.' });
+    }
+  }
+
+  const overall = Math.round((discovery + evidenceUse + objectionHandling + closing) / 4);
+
+  const strengths = [];
+  const weaknesses = [];
+  if (discovery >= 60) strengths.push('Asked meaningful discovery questions.');
+  else weaknesses.push('Not enough discovery. Ask more open questions.');
+  if (evidenceUse >= 40) strengths.push('Referenced observation-based evidence.');
+  else weaknesses.push('Rarely referenced specific observations. Practice using platform + prompt + date framing.');
+  if (objectionHandling >= 60) strengths.push('Engaged with objections rather than deflecting.');
+  else weaknesses.push('Struggled to convert objections into information.');
+  if (closing >= 30) strengths.push('Attempted a next step.');
+  else weaknesses.push('Did not propose a clear next step.');
+
+  return {
+    overall,
+    dimensions: { discovery, evidenceUse, objectionHandling, closing },
+    strengths,
+    weaknesses,
+    unsupportedClaims: unsupported,
+    learnerTurns: learner.length,
+    buyerTurns: buyer.length,
+  };
+}
+
+function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+// ── Voice score view ─────────────────────────────────────────
+Views['voice-score'] = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const id = Router.params.segments[0];
+  const session = Store.data.voiceSessions.find(s => s.id === id && s.userId === user.id);
+  if (!session) return `<p>Session not found.</p>`;
+  const s = session.score;
+  if (!s) return `<p>Session not scored.</p>`;
+
+  const dims = [
+    ['Discovery', s.dimensions.discovery],
+    ['Evidence Use', s.dimensions.evidenceUse],
+    ['Objection Handling', s.dimensions.objectionHandling],
+    ['Closing', s.dimensions.closing],
+  ];
+
+  return `
+    <a href="#/voice" style="font-size:12px;color:var(--text-mute)">← Voice sessions</a>
+    <h1 style="margin-top:16px">Session Score</h1>
+    <p class="sub">${esc(session.scenario.replace('_',' '))} · ${esc(PERSONAS[session.persona].label)}</p>
+
+    <div class="card" style="margin-top:24px;border-color:var(--gold-dim);background:rgba(212,175,55,.05)">
+      <p class="eyebrow" style="color:var(--gold)">AI SEO Sales Professional Score</p>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-top:8px">
+        <span style="font-size:56px;font-weight:300;color:var(--gold)">${s.overall}</span>
+        <span style="font-size:13px;color:var(--text-mute)">/ 100</span>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:28px"><h2>Dimensions</h2></div>
+    <div>
+      ${dims.map(([label, val]) => `
+        <div class="score-row">
+          <span class="score-label">${label}</span>
+          <div class="score-bar"><div class="score-fill" style="width:${val}%"></div></div>
+          <span class="score-val">${val}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="grid grid-2" style="margin-top:24px">
+      <div class="card">
+        <p class="eyebrow" style="color:var(--green)">Strengths</p>
+        <ul class="bullets" style="margin-top:10px">
+          ${s.strengths.length ? s.strengths.map(x => `<li>${esc(x)}</li>`).join('') : '<li>None noted.</li>'}
+        </ul>
+      </div>
+      <div class="card">
+        <p class="eyebrow" style="color:var(--red)">Weaknesses</p>
+        <ul class="bullets" style="margin-top:10px">
+          ${s.weaknesses.length ? s.weaknesses.map(x => `<li>${esc(x)}</li>`).join('') : '<li>None noted.</li>'}
+        </ul>
+      </div>
+    </div>
+
+    ${s.unsupportedClaims.length > 0 ? `
+      <div class="card" style="margin-top:20px;border-color:var(--red-line);background:var(--red-bg)">
+        <p class="eyebrow" style="color:var(--red)">Claim Firewall — Unsupported</p>
+        <ul class="bullets" style="margin-top:10px">
+          ${s.unsupportedClaims.map(c => `
+            <li><em style="color:var(--text)">"${esc(c.quote)}"</em><br><span style="color:var(--red);font-size:12px">${esc(c.reason)}</span></li>
+          `).join('')}
+        </ul>
+      </div>
+    ` : ''}
+
+    <div class="section-head" style="margin-top:32px"><h2>Recommended next</h2></div>
+    <div class="list">
+      ${s.dimensions.evidenceUse < 50 ? `<div class="list-item" onclick="Router.go('course/ai-seo-sales')">Evidence-based selling <span style="color:var(--text-mute);margin-left:auto">→</span></div>` : ''}
+      ${s.dimensions.discovery < 50 ? `<div class="list-item" onclick="Router.go('course/ai-seo-sales')">Discovery fundamentals <span style="color:var(--text-mute);margin-left:auto">→</span></div>` : ''}
+      ${s.dimensions.closing < 30 ? `<div class="list-item" onclick="Router.go('voice')">Retry with a closing attempt <span style="color:var(--text-mute);margin-left:auto">→</span></div>` : ''}
+      <div class="list-item" onclick="Router.go('voice')">Start a new session <span style="color:var(--text-mute);margin-left:auto">→</span></div>
+    </div>
+  `;
+};
+
+// ── Evidence Cards ────────────────────────────────────────────
+Views.evidence = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const cards = Store.evidence(user.id);
+
+  return `
+    <div class="section-head">
+      <div>
+        <h1>Evidence Cards</h1>
+        <p class="sub">Every claim needs a status. No exceptions.</p>
+      </div>
+      <button class="btn btn-primary" onclick="showNewEvidence()">+ New card</button>
+    </div>
+
+    ${cards.length === 0 ? `
+      <div class="empty">No evidence yet. Start documenting observations you actually made.</div>
+    ` : `
+      <div class="list">
+        ${cards.slice().reverse().map(e => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+              <p style="flex:1;font-size:14px">${esc(e.claim)}</p>
+              <span class="tag tag-${e.status}">${e.status}</span>
+            </div>
+            ${e.sourceUrl ? `<p class="mono" style="color:var(--text-mute);margin-top:8px;word-break:break-all">${esc(e.sourceUrl)}</p>` : ''}
+            <p class="sub" style="font-size:11px;margin-top:8px">
+              ${e.sourceDate ? 'Source date: ' + e.sourceDate + ' · ' : ''}Confidence: ${e.confidence}% · ${new Date(e.createdAt).toLocaleDateString()}
+            </p>
+            ${e.notes ? `<p style="margin-top:8px;font-size:12px;color:var(--text-dim)">${esc(e.notes)}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+};
+
+function showNewEvidence() {
+  const html = `
+    <div class="overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>New evidence card</h3>
+        <div class="field" style="margin-top:16px">
+          <label>Claim</label>
+          <textarea id="ev-claim" rows="3" placeholder="What are you claiming?"></textarea>
+        </div>
+        <div class="field">
+          <label>Source URL</label>
+          <input id="ev-url" placeholder="https://…">
+        </div>
+        <div class="field">
+          <label>Source date</label>
+          <input id="ev-date" type="date">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="ev-status">
+            <option value="OBSERVED">OBSERVED — I saw it, on this date, on this system</option>
+            <option value="VERIFIED">VERIFIED — independently checkable right now</option>
+            <option value="INFERRED">INFERRED — derived from observation</option>
+            <option value="HYPOTHESIS">HYPOTHESIS — working assumption</option>
+            <option value="UNKNOWN">UNKNOWN — I don't know yet</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Confidence (0–100)</label>
+          <input id="ev-conf" type="number" min="0" max="100" value="70">
+        </div>
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="ev-notes" rows="2"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn" onclick="closeModal()" style="flex:1">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEvidence()" style="flex:1">Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.id = 'modal-root';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+
+function saveEvidence() {
+  const user = Store.user();
+  const claim = document.getElementById('ev-claim').value.trim();
+  if (!claim) { toast('Claim is required.'); return; }
+  Store.evidence(user.id).push({
+    id: Store.uid(),
+    claim,
+    sourceUrl: document.getElementById('ev-url').value.trim(),
+    sourceDate: document.getElementById('ev-date').value,
+    status: document.getElementById('ev-status').value,
+    confidence: parseInt(document.getElementById('ev-confidence')?.value || document.getElementById('ev-conf').value || '70', 10),
+    notes: document.getElementById('ev-notes').value.trim(),
+    createdAt: Date.now(),
+  });
+  Store.save();
+  closeModal();
+  toast('Evidence saved');
+  render();
+}
+
+function closeModal() {
+  const el = document.getElementById('modal-root');
+  if (el) el.remove();
+}
+
+// ── Prospects ─────────────────────────────────────────────────
+Views.prospects = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const list = Store.prospects(user.id);
+
+  return `
+    <div class="section-head">
+      <div>
+        <h1>Prospects</h1>
+        <p class="sub">Public information only. Every fact carries a status.</p>
+      </div>
+      <button class="btn btn-primary" onclick="showNewProspect()">+ New</button>
+    </div>
+
+    ${list.length === 0 ? `
+      <div class="empty">No prospects yet. Add a company to begin research.</div>
+    ` : `
+      <div class="list">
+        ${list.slice().reverse().map(p => `
+          <div class="list-item" onclick="Router.go('prospect/${p.id}')">
+            <div style="flex:1">
+              <div>${esc(p.companyName)}</div>
+              <div style="font-size:12px;color:var(--text-mute)">${esc(p.domain)}</div>
+            </div>
+            <span style="color:var(--text-mute);font-size:12px">${p.findings?.length || 0} findings</span>
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+};
+
+function showNewProspect() {
+  const html = `
+    <div class="overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>New prospect</h3>
+        <div class="field" style="margin-top:16px">
+          <label>Company name</label>
+          <input id="pr-name">
+        </div>
+        <div class="field">
+          <label>Domain</label>
+          <input id="pr-domain" placeholder="example.com">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn" onclick="closeModal()" style="flex:1">Cancel</button>
+          <button class="btn btn-primary" onclick="saveProspect()" style="flex:1">Create</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.id = 'modal-root';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+
+function saveProspect() {
+  const user = Store.user();
+  const companyName = document.getElementById('pr-name').value.trim();
+  const domain = document.getElementById('pr-domain').value.trim();
+  if (!companyName || !domain) { toast('Name and domain required.'); return; }
+  Store.prospects(user.id).push({
+    id: Store.uid(),
+    companyName,
+    domain,
+    findings: [],
+    createdAt: Date.now(),
+  });
+  Store.save();
+  closeModal();
+  render();
+}
+
+Views.prospect = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const id = Router.params.segments[0];
+  const p = Store.prospects(user.id).find(x => x.id === id);
+  if (!p) return `<p>Prospect not found.</p>`;
+
+  return `
+    <a href="#/prospects" style="font-size:12px;color:var(--text-mute)">← Prospects</a>
+    <h1 style="margin-top:16px">${esc(p.companyName)}</h1>
+    <p class="sub">${esc(p.domain)}</p>
+
+    <div class="section-head" style="margin-top:28px">
+      <h2>Findings</h2>
+      <button class="btn btn-primary" onclick="showNewFinding('${p.id}')">+ Add finding</button>
+    </div>
+
+    ${(!p.findings || p.findings.length === 0) ? `
+      <div class="empty">No findings yet. Research the company and record what you observed.</div>
+    ` : `
+      <div class="list">
+        ${p.findings.slice().reverse().map(f => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+              <p style="flex:1;font-size:14px">${esc(f.claim)}</p>
+              <span class="tag tag-${f.status}">${f.status}</span>
+            </div>
+            <p class="sub" style="font-size:11px;margin-top:8px">${esc(f.category)} · confidence ${f.confidence}%</p>
+            ${f.sourceUrl ? `<p class="mono" style="color:var(--text-mute);margin-top:6px;font-size:11px;word-break:break-all">${esc(f.sourceUrl)}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+};
+
+function showNewFinding(prospectId) {
+  const html = `
+    <div class="overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>New finding</h3>
+        <div class="field" style="margin-top:16px">
+          <label>Category</label>
+          <select id="fd-cat">
+            <option>positioning</option>
+            <option>services</option>
+            <option>target_market</option>
+            <option>competitor</option>
+            <option>technology_signals</option>
+            <option>other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Claim</label>
+          <textarea id="fd-claim" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>Source URL</label>
+          <input id="fd-url">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="fd-status">
+            <option value="OBSERVED">OBSERVED</option>
+            <option value="VERIFIED">VERIFIED</option>
+            <option value="INFERRED">INFERRED</option>
+            <option value="HYPOTHESIS">HYPOTHESIS</option>
+            <option value="UNKNOWN">UNKNOWN</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Confidence</label>
+          <input id="fd-conf" type="number" min="0" max="100" value="70">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn" onclick="closeModal()" style="flex:1">Cancel</button>
+          <button class="btn btn-primary" onclick="saveFinding('${prospectId}')" style="flex:1">Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.id = 'modal-root';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+
+function saveFinding(prospectId) {
+  const user = Store.user();
+  const p = Store.prospects(user.id).find(x => x.id === prospectId);
+  if (!p) return;
+  const claim = document.getElementById('fd-claim').value.trim();
+  if (!claim) { toast('Claim required.'); return; }
+  p.findings = p.findings || [];
+  p.findings.push({
+    id: Store.uid(),
+    category: document.getElementById('fd-cat').value,
+    claim,
+    sourceUrl: document.getElementById('fd-url').value.trim(),
+    status: document.getElementById('fd-status').value,
+    confidence: parseInt(document.getElementById('fd-conf').value || '70', 10),
+    createdAt: Date.now(),
+  });
+  Store.save();
+  closeModal();
+  render();
+}
+
+/* ─── Helpers ───────────────────────────────────────────────── */
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ─── Shell render ──────────────────────────────────────────── */
+function render() {
+  const user = Store.user();
+  const route = Router.current;
+  const view = Views[route] || Views.landing;
+  const html = view();
+
+  if (!user || route === 'landing' || route === 'login' || route === 'signup' || route === 'verify') {
+    document.getElementById('app').innerHTML = html;
+    return;
+  }
+
+  const NAV_ITEMS = [
+    { id:'dashboard', label:'Home' },
+    { id:'learn', label:'Learn' },
+    { id:'assessments', label:'Assess' },
+    { id:'voice', label:'Voice' },
+    { id:'prospects', label:'Prospects' },
+    { id:'evidence', label:'Evidence' },
+    { id:'credentials', label:'Credentials' },
+  ];
+
+  document.getElementById('app').innerHTML = `
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand" onclick="Router.go('dashboard')">
+          <div class="brand-sub">Corporate Curators</div>
+          <div class="brand-name">AEO 9</div>
+          <div class="brand-tag">AI SEO Academy</div>
+        </div>
+        ${NAV_ITEMS.map(n => `
+          <div class="nav-item ${route === n.id || (route === 'course' && n.id === 'learn') || (route === 'lesson' && n.id === 'learn') || (route === 'attempt' && n.id === 'assessments') || (route === 'result' && n.id === 'assessments') || (route === 'voice-score' && n.id === 'voice') ? 'active' : ''}"
+               onclick="Router.go('${n.id}')">
+            <span class="nav-dot"></span>${n.label}
+          </div>
+        `).join('')}
+        <div style="flex:1"></div>
+        <div class="nav-item" onclick="Router.go('verify')">
+          <span class="nav-dot"></span>Verify
+        </div>
+        <div class="nav-item" onclick="doLogout()">
+          <span class="nav-dot"></span>Sign out
+        </div>
+        <p style="font-size:10px;color:var(--text-mute);margin-top:14px;padding:0 12px">${esc(user.email)}</p>
+      </aside>
+      <main class="main">${html}</main>
+    </div>
+    <nav class="bottom-nav">
+      ${NAV_ITEMS.slice(0, 5).map(n => `
+        <div class="nav-item ${route === n.id || (route === 'course' && n.id === 'learn') || (route === 'lesson' && n.id === 'learn') ? 'active' : ''}"
+             onclick="Router.go('${n.id}')">
+          <span class="nav-dot"></span>${n.label}
+        </div>
+      `).join('')}
+    </nav>
+  `;
+}
+
+/* ─── Boot ──────────────────────────────────────────────────── */
+Store.load();
+Router.parse();
+window.addEventListener('hashchange', () => { Router.parse(); render(); });
+render();
+
+// Expose for inline handlers
+window.Router = Router;
+window.Store = Store;
+window.render = render;
+window.doSignup = doSignup;
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.toggleLesson = toggleLesson;
+window.startAttempt = startAttempt;
+window.setAttemptResponse = setAttemptResponse;
+window.setWrittenResponse = setWrittenResponse;
+window.submitAttempt = submitAttempt;
+window.issueCredential = issueCredential;
+window.startVoiceCall = startVoiceCall;
+window.startListening = startListening;
+window.stopListening = stopListening;
+window.interruptBuyer = interruptBuyer;
+window.showTypeFallback = showTypeFallback;
+window.sendTyped = sendTyped;
+window.endVoiceCall = endVoiceCall;
+window.showNewEvidence = showNewEvidence;
+window.saveEvidence = saveEvidence;
+window.closeModal = closeModal;
+window.showNewProspect = showNewProspect;
+window.saveProspect = saveProspect;
+window.showNewFinding = showNewFinding;
+window.saveFinding = saveFinding;
+window.gotoVerify = gotoVerify;
+window.toast = toast;
+
+/* ═══════════════════════════════════════════════════════════════
+   ADD-ON: AI Visibility Lab + AI-ZMOT
+   ─────────────────────────────────────────────────────────────────
+   Works in three modes, labeled honestly:
+     • api_direct     — you provided a Gemini API key
+     • manual_entry   — you recorded what you observed in a platform's UI
+     • simulated      — no observation; output is a hypothesis only
+   Every observation carries its platform, method, date, and status.
+   No result is displayed without them.
+   ═══════════════════════════════════════════════════════════════ */
+(() => {
+'use strict';
+
+/* ─── Extend store (idempotent) ─────────────────────────────── */
+function ensureVisibility(userId) {
+  Store.data.visibility ||= {};
+  Store.data.visibility[userId] ||= [];
+  return Store.data.visibility[userId];
+}
+
+Store.getGeminiKey = () => localStorage.getItem('aeo9.geminiKey') || '';
+Store.setGeminiKey = (k) => localStorage.setItem('aeo9.geminiKey', k.trim());
+
+/* ─── Provider adapters ─────────────────────────────────────── */
+const Providers = {
+  async geminiDirect(prompt) {
+    const key = Store.getGeminiKey();
+    if (!key) throw new Error('no_key');
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      }
+    );
+    if (!res.ok) throw new Error('gemini_' + res.status);
+    const data = await res.json();
+    const c = data?.candidates?.[0];
+    const answer = (c?.content?.parts || []).map(p => p.text).filter(Boolean).join('\n');
+    const cited = (c?.groundingMetadata?.groundingChunks || []).map(x => x?.web?.uri).filter(Boolean);
+    return { answer, cited, status: 'OBSERVED', confidence: cited.length ? 90 : 60 };
+  },
+};
+
+/* ─── Extraction (crude, honest about its limits) ───────────── */
+function extractBrands(text) {
+  if (!text) return [];
+  const stop = new Set(['The','This','That','These','Those','Some','Many','Most','However','But','And','One','Two','Three','Yes','No','In','On','For','With']);
+  const out = [];
+  const seen = new Set();
+  const matches = text.match(/\b([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+){0,3})\b/g) || [];
+  matches.forEach((m, i) => {
+    if (stop.has(m) || seen.has(m)) return;
+    seen.add(m);
+    out.push({ name: m, position: i, sentiment: 'neutral' });
+  });
+  return out;
+}
+
+/* ─── Scoring (computed, not invented) ──────────────────────── */
+function computeMetrics(obs) {
+  if (!obs.length) return { visibility: 0, share: 0, citation: 0, observed: 0, total: 0, confidence: 0 };
+  const observed = obs.filter(o => o.status === 'OBSERVED' || o.status === 'VERIFIED');
+  if (!observed.length) return { visibility: 0, share: 0, citation: 0, observed: 0, total: obs.length, confidence: 0 };
+
+  const mentions = observed.filter(o => o.brandMentioned).length;
+  const citations = observed.filter(o => o.brandCited).length;
+  const slots = observed.reduce((n, o) => n + Math.max(1, (o.citedUrls || []).length || 1), 0);
+
+  const posScore = observed.reduce((sum, o) => {
+    if (!o.brandMentioned) return sum;
+    return sum + Math.max(0, 100 - (o.brandPosition ?? 10) * 10);
+  }, 0);
+
+  const visibility = Math.round(posScore / observed.length);
+  const share = Math.round((mentions / observed.length) * 100);
+  const citation = slots ? Math.round((citations / slots) * 100) : 0;
+  const minConf = Math.min(...observed.map(o => o.confidence || 0));
+  const confidence = Math.round(minConf * (observed.length / obs.length));
+
+  return { visibility, share, citation, observed: observed.length, total: obs.length, confidence };
+}
+
+function computeZmot(observations) {
+  const m = computeMetrics(observations);
+  const stages = {
+    discovery:     clampScore(m.visibility),
+    research:      clampScore(Math.round((m.share + m.confidence) / 2)),
+    comparison:    clampScore(m.share),
+    validation:    clampScore(m.citation),
+    shortlisting:  clampScore(Math.round(m.visibility * 0.7 + m.citation * 0.3)),
+    action:        clampScore(Math.round(m.citation * 0.5 + m.confidence * 0.5)),
+  };
+  const overall = Math.round(Object.values(stages).reduce((a, b) => a + b, 0) / 6);
+
+  const unknownCount = observations.filter(o => o.status === 'UNKNOWN').length;
+  const platforms = [...new Set(observations.map(o => o.platform))].join(', ');
+  const methods = [...new Set(observations.map(o => o.method))].join(', ');
+
+  return {
+    stages, overall,
+    limitations: `Based on ${observations.length} observation(s) across ${platforms || 'no platform'}. Methods: ${methods || 'none'}.` +
+      (unknownCount ? ` ${unknownCount} observation(s) excluded as UNKNOWN.` : '') +
+      ` Scores reflect observed data only. Where observations are absent or UNKNOWN, scores reflect that absence — not the brand's true visibility.`,
+  };
+}
+
+function clampScore(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+/* ─── Views ─────────────────────────────────────────────────── */
+Views.visibility = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const runs = ensureVisibility(user.id).slice().reverse();
+  const hasKey = !!Store.getGeminiKey();
+
+  return `
+    <div class="section-head">
+      <div>
+        <h1>AI Visibility Lab</h1>
+        <p class="sub">Observation, not imagination. Every result carries a platform, method, date, and status.</p>
+      </div>
+      <button class="btn btn-primary" onclick="Router.go('visibility-new')">+ New run</button>
+    </div>
+
+    <div class="alert ${hasKey ? 'alert-info' : 'alert-warn'}" style="font-size:12px">
+      ${hasKey
+        ? `<strong>Mode: direct observation available.</strong> A Gemini API key is configured. Runs against Gemini will be recorded as <span class="tag tag-OBSERVED" style="margin:0 4px">OBSERVED</span> with real citations. <button class="btn" style="margin-left:8px;padding:4px 10px;font-size:11px" onclick="Store.setGeminiKey('');render()">Remove key</button>`
+        : `<strong>Mode: manual entry.</strong> No API key set. You can still record what you observe in any platform's UI (ChatGPT, Claude, Perplexity, etc.) — those runs will be labeled <span class="tag tag-OBSERVED" style="margin:0 4px">OBSERVED</span>. Direct-API runs require a key. <button class="btn btn-primary" style="margin-left:8px;padding:4px 10px;font-size:11px" onclick="promptKey()">Add Gemini key</button>`}
+    </div>
+
+    ${runs.length === 0 ? `
+      <div class="empty">No visibility runs yet. Start by recording what you actually observe — or add an API key for direct observation.</div>
+    ` : `
+      <div class="list">
+        ${runs.map(r => {
+          const m = computeMetrics(r.observations);
+          return `
+            <div class="card card-link" onclick="Router.go('visibility-run/${r.id}')">
+              <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                <div style="flex:1">
+                  <h3>${esc(r.brand)}</h3>
+                  <p class="sub" style="font-size:12px">${esc(r.platform)} · ${esc(r.method)} · ${r.observations.length} observation${r.observations.length === 1 ? '' : 's'}</p>
+                  <p class="sub" style="font-size:11px;margin-top:4px">${new Date(r.runAt).toLocaleString()}</p>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:22px;color:var(--gold);font-weight:300">${m.visibility}</div>
+                  <div class="eyebrow">Visibility</div>
+                </div>
+              </div>
+              ${m.observed < m.total ? `
+                <p style="margin-top:10px;font-size:11px;color:var(--amber)">
+                  ⚠️ ${m.total - m.observed} observation(s) excluded — status is not OBSERVED or VERIFIED.
+                </p>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `}
+  `;
+};
+
+Views['visibility-new'] = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const hasKey = !!Store.getGeminiKey();
+
+  return `
+    <a href="#/visibility" style="font-size:12px;color:var(--text-mute)">← Visibility Lab</a>
+    <h1 style="margin-top:16px">New Visibility Run</h1>
+    <p class="sub">Record what you observe. Nothing is inferred, nothing is filled in.</p>
+
+    <div class="field" style="margin-top:24px">
+      <label>Brand</label>
+      <input id="v-brand" placeholder="Acme Inc">
+    </div>
+    <div class="field">
+      <label>Competitors (comma-separated, optional)</label>
+      <input id="v-comps" placeholder="Competitor A, Competitor B">
+    </div>
+    <div class="field">
+      <label>Platform</label>
+      <select id="v-platform">
+        <option value="gemini" ${hasKey ? '' : 'disabled'}>Gemini (direct API${hasKey ? '' : ' — key required'})</option>
+        <option value="chatgpt">ChatGPT (manual entry)</option>
+        <option value="claude">Claude (manual entry)</option>
+        <option value="perplexity">Perplexity (manual entry)</option>
+        <option value="copilot">Microsoft Copilot (manual entry)</option>
+        <option value="manual">Other / manual</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Prompts (one per line)</label>
+      <textarea id="v-prompts" rows="5" placeholder="What are the best CRMs for agencies?&#10;Acme vs Competitor A"></textarea>
+    </div>
+
+    <div id="v-manual-section">
+      <div class="field">
+        <label>Recorded answers (one per prompt, separated by "---" on its own line)</label>
+        <textarea id="v-answers" rows="6" placeholder="Paste exactly what you saw. Use --- between prompts."></textarea>
+      </div>
+      <div class="field">
+        <label>Cited URLs (one per line, optional)</label>
+        <textarea id="v-cited" rows="3" placeholder="https://..."></textarea>
+      </div>
+      <p class="sub" style="font-size:11px">
+        Manual entries are recorded as OBSERVED — you are the observer. Do not paste answers you did not actually see.
+      </p>
+    </div>
+
+    <div id="v-direct-section" style="display:${hasKey ? 'block' : 'none'}">
+      <p class="sub" style="font-size:12px">Runs will call Gemini directly. Each prompt is a separate request.</p>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn" onclick="Router.go('visibility')" style="flex:1">Cancel</button>
+      <button id="v-run-btn" class="btn btn-primary" onclick="runVisibility()" style="flex:1">Run</button>
+    </div>
+  `;
+};
+
+function promptKey() {
+  const k = window.prompt('Paste a Google AI Studio API key (stored only in your browser):');
+  if (k && k.trim()) { Store.setGeminiKey(k); toast('Key saved'); render(); }
+}
+
+async function runVisibility() {
+  const user = Store.user();
+  const brand = document.getElementById('v-brand').value.trim();
+  const comps = document.getElementById('v-comps').value.split(',').map(s => s.trim()).filter(Boolean);
+  const platform = document.getElementById('v-platform').value;
+  const promptText = document.getElementById('v-prompts').value;
+  const prompts = promptText.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if (!brand) { toast('Brand required.'); return; }
+  if (!prompts.length) { toast('At least one prompt required.'); return; }
+  if (prompts.length > 20) { toast('Max 20 prompts per run.'); return; }
+
+  const isManual = platform !== 'gemini';
+  const manualAnswers = isManual
+    ? (document.getElementById('v-answers').value || '').split(/\n---+\n/).map(s => s.trim())
+    : [];
+  const manualCited = isManual
+    ? (document.getElementById('v-cited').value || '').split('\n').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  if (isManual && manualAnswers.filter(Boolean).length !== prompts.length) {
+    toast('Manual runs need one recorded answer per prompt (separated by ---).');
+    return;
+  }
+
+  const btn = document.getElementById('v-run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+
+  const observations = [];
+  const allTargets = [brand, ...comps];
+
+  for (let i = 0; i < prompts.length; i++) {
+    const prompt = prompts[i];
+    let answer = '', cited = [], status = 'UNKNOWN', confidence = 0, notes = '';
+
+    if (isManual) {
+      answer = manualAnswers[i] || '';
+      cited = i === 0 ? manualCited : [];
+      status = answer ? 'OBSERVED' : 'UNKNOWN';
+      confidence = answer ? 95 : 0;
+      notes = 'Recorded from platform UI by the learner.';
+    } else {
+      try {
+        const r = await Providers.geminiDirect(prompt);
+        answer = r.answer; cited = r.cited; status = r.status; confidence = r.confidence;
+      } catch (e) {
+        status = 'UNKNOWN'; confidence = 0;
+        notes = e.message === 'no_key'
+          ? 'No API key configured.'
+          : `Observation failed (${e.message}).`;
+      }
+    }
+
+    const mentions = extractBrands(answer);
+    const brandHit = mentions.find(m => m.name.toLowerCase().includes(brand.toLowerCase()));
+    const brandCited = cited.some(u => u.toLowerCase().includes(brand.toLowerCase().replace(/\s+/g, '')));
+
+    observations.push({
+      id: Store.uid(),
+      prompt, answer, citedUrls: cited,
+      mentionedBrands: mentions,
+      brandMentioned: !!brandHit,
+      brandCited: !!brandHit && brandCited,
+      brandPosition: brandHit?.position ?? null,
+      status, confidence, notes,
+      observedAt: Date.now(),
+    });
+  }
+
+  const run = {
+    id: Store.uid(),
+    userId: user.id,
+    brand, competitors: comps,
+    platform,
+    method: platform === 'gemini' ? 'api_direct' : 'manual_entry',
+    prompts,
+    observations,
+    runAt: Date.now(),
+  };
+
+  ensureVisibility(user.id).push(run);
+  Store.save();
+  Router.go('visibility-run/' + run.id);
+}
+
+Views['visibility-run'] = () => {
+  const user = Store.user();
+  if (!user) return Views.landing();
+  const id = Router.params.segments[0];
+  const run = ensureVisibility(user.id).find(r => r.id === id);
+  if (!run) return `<p>Run not found.</p>`;
+
+  const m = computeMetrics(run.observations);
+  const zmot = computeZmot(run.observations);
+
+  return `
+    <a href="#/visibility" style="font-size:12px;color:var(--text-mute)">← Visibility Lab</a>
+    <h1 style="margin-top:16px">${esc(run.brand)}</h1>
+    <p class="sub">
+      ${esc(run.platform)} · ${esc(run.method)} · ${new Date(run.runAt).toLocaleString()}
+    </p>
+
+    <div class="grid grid-3" style="margin-top:24px">
+      <div class="stat">
+        <div class="stat-label">AI Visibility</div>
+        <div class="stat-value">${m.visibility}</div>
+        <div class="stat-sub">${m.observed}/${m.total} observed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Share of Voice</div>
+        <div class="stat-value">${m.share}%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Citation Share</div>
+        <div class="stat-value">${m.citation}%</div>
+      </div>
+    </div>
+
+    ${m.observed < m.total ? `
+      <div class="alert alert-warn" style="margin-top:20px;font-size:12px">
+        ${m.total - m.observed} observation(s) are UNKNOWN and excluded from scoring. Add an API key or record what you observed.
+      </div>
+    ` : ''}
+
+    <div class="section-head" style="margin-top:32px"><h2>AI-ZMOT</h2></div>
+    <div class="card" style="border-color:var(--gold-dim);background:rgba(212,175,55,.04)">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span style="font-size:48px;font-weight:300;color:var(--gold)">${zmot.overall}</span>
+        <span class="eyebrow">overall</span>
+      </div>
+      <div class="grid grid-3" style="margin-top:20px;gap:12px">
+        ${Object.entries(zmot.stages).map(([stage, v]) => `
+          <div>
+            <div class="eyebrow">${stage}</div>
+            <div style="font-size:20px;color:var(--gold);font-weight:300;margin-top:2px">${v}</div>
+            <div class="progress" style="margin-top:6px"><div class="progress-bar" style="width:${v}%"></div></div>
+          </div>
+        `).join('')}
+      </div>
+      <p style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--text-mute);line-height:1.6">
+        ${esc(zmot.limitations)}
+      </p>
+    </div>
+
+    <div class="section-head" style="margin-top:32px"><h2>Observations</h2></div>
+    <div class="list">
+      ${run.observations.map(o => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+            <p style="flex:1;font-size:13px;color:var(--text-dim)"><strong style="color:var(--text)">Prompt:</strong> ${esc(o.prompt)}</p>
+            <span class="tag tag-${o.status}">${o.status}</span>
+          </div>
+          ${o.answer ? `
+            <details style="margin-top:12px">
+              <summary style="cursor:pointer;font-size:12px;color:var(--gold)">Show answer</summary>
+              <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;color:var(--text-dim);margin-top:10px;padding:12px;background:var(--obsidian-100);border-radius:6px">${esc(o.answer)}</pre>
+            </details>
+          ` : ''}
+          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--text-mute)">
+            <span>Brand mentioned: <strong style="color:${o.brandMentioned ? 'var(--green)' : 'var(--text-mute)'}">${o.brandMentioned ? 'yes' : 'no'}</strong></span>
+            <span>Brand cited: <strong style="color:${o.brandCited ? 'var(--green)' : 'var(--text-mute)'}">${o.brandCited ? 'yes' : 'no'}</strong></span>
+            ${o.brandPosition != null ? `<span>Position: ${o.brandPosition}</span>` : ''}
+            <span>Confidence: ${o.confidence}%</span>
+          </div>
+          ${o.citedUrls.length ? `
+            <div style="margin-top:10px">
+              <p class="eyebrow">Cited URLs</p>
+              <ul style="list-style:none;margin-top:6px;font-size:11px">
+                ${o.citedUrls.slice(0, 8).map(u => `<li style="word-break:break-all;color:var(--text-mute)">${esc(u)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          ${o.notes ? `<p style="margin-top:10px;font-size:11px;color:var(--amber)">${esc(o.notes)}</p>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+};
+
+/* ─── Nav integration ───────────────────────────────────────── */
+const origRender = window.render;
+window.render = function() {
+  origRender();
+  // After render, inject "Visibility" into the sidebar + bottom nav
+  const user = Store.user();
+  if (!user) return;
+  const route = Router.current;
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar && !sidebar.querySelector('[data-nav="visibility"]')) {
+    const marker = sidebar.querySelector('.nav-item[onclick*="prospects"]');
+    if (marker) {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + ((route === 'visibility' || route === 'visibility-new' || route === 'visibility-run') ? ' active' : '');
+      el.dataset.nav = 'visibility';
+      el.onclick = () => Router.go('visibility');
+      el.innerHTML = '<span class="nav-dot"></span>Visibility';
+      marker.after(el);
+    }
+  }
+  const bottom = document.querySelector('.bottom-nav');
+  if (bottom && !bottom.querySelector('[data-nav="visibility"]')) {
+    const first = bottom.querySelector('.nav-item');
+    if (first) {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + ((route === 'visibility' || route === 'visibility-new' || route === 'visibility-run') ? ' active' : '');
+      el.dataset.nav = 'visibility';
+      el.onclick = () => Router.go('visibility');
+      el.innerHTML = '<span class="nav-dot"></span>Visibility';
+      // Insert second so "Home" stays first
+      first.after(el);
+      // Trim to 6 items so it fits
+      while (bottom.children.length > 6) bottom.removeChild(bottom.lastChild);
+    }
+  }
+};
+
+/* ─── Expose handlers ───────────────────────────────────────── */
+window.promptKey = promptKey;
+window.runVisibility = runVisibility;
+
+// Trigger first render with the new nav
+render();
+})();
+</script>
+</body>
+</html>
