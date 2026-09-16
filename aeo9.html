@@ -1146,7 +1146,7 @@ Views.attempt = () => {
       body = q.options.map(o => {
         const selected = (resp.selected || []).includes(o.id);
         return `
-          <label class="choice ${selected ? 'selected' : ''}" onclick="setAttemptResponse('${q.id}','${o.id}','${q.type}')">
+          <label class="choice ${selected ? 'selected' : ''}" onclick="event.preventDefault();setAttemptResponse('${q.id}','${o.id}','${q.type}')">
             <input type="${q.type === 'mcq' ? 'radio' : 'checkbox'}" ${selected ? 'checked' : ''} onclick="event.preventDefault()">
             <span>${esc(o.text)}</span>
           </label>
