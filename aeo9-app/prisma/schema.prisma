@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Auth.js required models ─────────────────────────────────────
+// Field names/types here are the Prisma adapter's fixed contract —
+// do not rename without also updating @auth/prisma-adapter's schema.
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── User (extended beyond the adapter's minimum) ────────────────
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Only set for password-based signup. OAuth-only users have no password
+  // and can only sign in through the provider they registered with.
+  passwordHash String?
+  role         Role      @default(STUDENT)
+  createdAt    DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+  progress LessonProgress[]
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+// ── Curriculum ───────────────────────────────────────────────────
+model Course {
+  id       String   @id @default(cuid())
+  slug     String   @unique
+  title    String
+  school   Int
+  level    Int      @default(1)
+  theme    String
+  order    Int      @default(0)
+  modules  Module[]
+}
+
+model Module {
+  id       String   @id @default(cuid())
+  courseId String
+  title    String
+  order    Int
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        String @id @default(cuid())
+  moduleId  String
+  title     String
+  content   String @db.Text
+  order     Int
+  module    Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress  LessonProgress[]
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  lessonId    String
+  completedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
