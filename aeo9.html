@@ -2121,11 +2121,43 @@ async function deleteRecording(sessionId) {
 async function loadRecordingIntoPlayer(sessionId) {
   const blob = await RecordingDB.load(sessionId);
   const audio = document.getElementById('rec-audio-' + sessionId);
-  const dl = document.getElementById('rec-download-' + sessionId);
   if (!blob || !audio) return;
+  audio.src = URL.createObjectURL(blob);
+}
+
+// Opening this file locally or from a normal web host, a plain <a download>
+// works fine. Running as a published Claude Artifact, the sandbox never lets
+// a page trigger a browser download directly — that link would silently do
+// nothing. Where the platform's `downloads` capability is available, use it;
+// otherwise fall back to the ordinary blob-URL download.
+async function downloadRecording(sessionId) {
+  const blob = await RecordingDB.load(sessionId);
+  if (!blob) { toast('Recording not found.'); return; }
+  const filename = 'aeo9-call-' + sessionId + '.webm';
+
+  if (window.claude && typeof window.claude.use === 'function') {
+    try {
+      const downloads = await window.claude.use('downloads');
+      if (downloads) {
+        await downloads.save({ filename, data: blob });
+        toast('Recording downloaded.');
+        return;
+      }
+    } catch (e) {
+      if (e && e.code === 'declined') return;
+      // Any other rejection (unavailable, not_granted, etc.) — fall through
+      // to the ordinary browser download below.
+    }
+  }
+
   const url = URL.createObjectURL(blob);
-  audio.src = url;
-  if (dl) { dl.href = url; dl.download = 'aeo9-call-' + sessionId + '.webm'; }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function startListening() {
@@ -2344,7 +2376,7 @@ Views['voice-score'] = () => {
         <p class="sub" style="font-size:11px;margin-top:4px">Stored only in this browser. Not uploaded anywhere.</p>
         <audio id="rec-audio-${session.id}" controls style="width:100%;margin-top:12px"></audio>
         <div style="display:flex;gap:10px;margin-top:12px">
-          <a id="rec-download-${session.id}" class="btn" style="flex:1;text-align:center" href="#">Download</a>
+          <button class="btn" style="flex:1" onclick="downloadRecording('${session.id}')">Download</button>
           <button class="btn btn-danger" style="flex:1" onclick="deleteRecording('${session.id}')">Delete recording</button>
         </div>
       </div>
@@ -3219,6 +3251,7 @@ window.showRecordingConsent = showRecordingConsent;
 window.startRecording = startRecording;
 window.stopRecording = stopRecording;
 window.deleteRecording = deleteRecording;
+window.downloadRecording = downloadRecording;
 window.showTypeFallback = showTypeFallback;
 window.sendTyped = sendTyped;
 window.endVoiceCall = endVoiceCall;
