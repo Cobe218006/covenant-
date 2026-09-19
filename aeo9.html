@@ -1920,6 +1920,7 @@ function startVoiceCall(scenario) {
     startedAt: Date.now(),
     endedAt: null,
     score: null,
+    hasRecording: false,
   };
   Store.data.voiceSessions.push(session);
   Store.save();
@@ -1954,8 +1955,20 @@ function renderVoiceSession(session) {
           <p class="eyebrow">${esc(session.scenario.replace('_',' '))}</p>
           <h2 style="margin-top:4px">${esc(PERSONAS[session.persona].label)}</h2>
         </div>
-        <button class="btn btn-danger" onclick="endVoiceCall()">End</button>
+        <div style="display:flex;gap:8px">
+          ${Voice.recording
+            ? `<button class="btn btn-danger" onclick="stopRecording()">⏹ Stop recording</button>`
+            : `<button class="btn" onclick="showRecordingConsent()">🔴 Record call</button>`}
+          <button class="btn btn-danger" onclick="endVoiceCall()">End</button>
+        </div>
       </div>
+
+      ${Voice.recording ? `
+        <div class="alert alert-danger" style="margin-top:16px;margin-bottom:0;display:flex;align-items:center;gap:8px;font-size:12px">
+          <span class="pulse listening" style="width:8px;height:8px"></span>
+          <strong>RECORDING ACTIVE</strong> — audio is being captured and stored in this browser only.
+        </div>
+      ` : ''}
 
       <div class="call-status" style="margin-top:20px">
         <span class="pulse ${status}"></span>
@@ -1983,7 +1996,137 @@ function renderVoiceSession(session) {
   `;
 }
 
-const Voice = { active: null, recognition: null, synth: null, listening: false, speaking: false, thinking: false, startTime: 0 };
+const Voice = {
+  active: null, recognition: null, synth: null, listening: false, speaking: false, thinking: false, startTime: 0,
+  mediaStream: null, mediaRecorder: null, recordedChunks: [], recording: false,
+};
+
+/* ─── Call recording (MediaRecorder + IndexedDB, this device only) ───
+   Recordings never leave the browser — no upload, no server. Consent is
+   asked explicitly before the microphone opens for recording (separate
+   from the STT microphone use, which doesn't capture raw audio). ───── */
+const RecordingDB = {
+  DB_NAME: 'aeo9-recordings', STORE: 'recordings', VERSION: 1,
+  open() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, this.VERSION);
+      req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(this.STORE)) req.result.createObjectStore(this.STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async save(sessionId, blob) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).put(blob, sessionId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+  async load(sessionId) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const req = db.transaction(this.STORE, 'readonly').objectStore(this.STORE).get(sessionId);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async delete(sessionId) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      tx.objectStore(this.STORE).delete(sessionId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+};
+
+function showRecordingConsent() {
+  const html = `
+    <div class="overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>Record this call?</h3>
+        <p style="margin-top:14px;font-size:13px;color:var(--text-dim);line-height:1.6">
+          This turns on your microphone and records audio for the rest of this call.
+        </p>
+        <ul class="bullets" style="margin-top:12px">
+          <li>Stored only in this browser (IndexedDB) — never uploaded anywhere.</li>
+          <li>You can play it back, download it, or delete it from this call's score page.</li>
+          <li>A persistent "RECORDING" indicator stays visible the whole time it's on.</li>
+        </ul>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn" onclick="closeModal()" style="flex:1">Not now</button>
+          <button class="btn btn-primary" onclick="closeModal();startRecording()" style="flex:1">Start recording</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.id = 'modal-root';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+
+async function startRecording() {
+  const session = Voice.active;
+  if (!session) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    Voice.mediaStream = stream;
+    Voice.recordedChunks = [];
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) Voice.recordedChunks.push(e.data); };
+    recorder.onstop = async () => {
+      const blob = new Blob(Voice.recordedChunks, { type: recorder.mimeType || 'audio/webm' });
+      Voice.recordedChunks = [];
+      try {
+        await RecordingDB.save(session.id, blob);
+        session.hasRecording = true;
+        Store.save();
+        toast('Recording saved to this browser.');
+      } catch {
+        toast('Could not save the recording (storage may be full or blocked).');
+      }
+      render();
+    };
+    Voice.mediaRecorder = recorder;
+    recorder.start();
+    Voice.recording = true;
+    render();
+  } catch (e) {
+    toast('Could not start recording (' + (e.message || e.name || 'unknown error') + ').');
+  }
+}
+
+function stopRecording() {
+  if (Voice.mediaRecorder && Voice.mediaRecorder.state !== 'inactive') {
+    Voice.mediaRecorder.stop();
+  }
+  if (Voice.mediaStream) { Voice.mediaStream.getTracks().forEach(t => t.stop()); Voice.mediaStream = null; }
+  Voice.mediaRecorder = null;
+  Voice.recording = false;
+  render();
+}
+
+async function deleteRecording(sessionId) {
+  try { await RecordingDB.delete(sessionId); } catch {}
+  const session = Store.data.voiceSessions.find(s => s.id === sessionId);
+  if (session) { session.hasRecording = false; Store.save(); }
+  toast('Recording deleted.');
+  render();
+}
+
+async function loadRecordingIntoPlayer(sessionId) {
+  const blob = await RecordingDB.load(sessionId);
+  const audio = document.getElementById('rec-audio-' + sessionId);
+  const dl = document.getElementById('rec-download-' + sessionId);
+  if (!blob || !audio) return;
+  const url = URL.createObjectURL(blob);
+  audio.src = url;
+  if (dl) { dl.href = url; dl.download = 'aeo9-call-' + sessionId + '.webm'; }
+}
 
 function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2086,9 +2229,10 @@ function speakBuyer(session, text) {
     Voice.speaking = false;
     render();
   };
-  u.onerror = () => {
+  u.onerror = (e) => {
     Voice.speaking = false;
     render();
+    toast('Voice playback failed (' + (e.error || 'unknown') + '). Reading the buyer\'s line from the transcript below instead.');
   };
 
   window.speechSynthesis.cancel();
@@ -2099,6 +2243,7 @@ function endVoiceCall() {
   const session = Voice.active;
   if (!session) return;
   if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (Voice.recording) stopRecording();
   session.endedAt = Date.now();
   const seconds = Math.round((session.endedAt - session.startedAt) / 1000);
   Store.usage(session.userId).push({ kind: 'voice', seconds, at: Date.now() });
@@ -2192,6 +2337,18 @@ Views['voice-score'] = () => {
     <a href="#/voice" style="font-size:12px;color:var(--text-mute)">← Voice sessions</a>
     <h1 style="margin-top:16px">Session Score</h1>
     <p class="sub">${esc(session.scenario.replace('_',' '))} · ${esc(PERSONAS[session.persona].label)}</p>
+
+    ${session.hasRecording ? `
+      <div class="card" style="margin-top:20px">
+        <p class="eyebrow">Call recording</p>
+        <p class="sub" style="font-size:11px;margin-top:4px">Stored only in this browser. Not uploaded anywhere.</p>
+        <audio id="rec-audio-${session.id}" controls style="width:100%;margin-top:12px"></audio>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <a id="rec-download-${session.id}" class="btn" style="flex:1;text-align:center" href="#">Download</a>
+          <button class="btn btn-danger" style="flex:1" onclick="deleteRecording('${session.id}')">Delete recording</button>
+        </div>
+      </div>
+    ` : ''}
 
     <div class="card" style="margin-top:24px;border-color:var(--gold-dim);background:rgba(212,175,55,.05)">
       <p class="eyebrow" style="color:var(--gold)">AI SEO Sales Professional Score</p>
@@ -3009,6 +3166,12 @@ function render() {
       }).join('')}
     </nav>
   `;
+
+  if (route === 'voice-score') {
+    const id = Router.params.segments[0];
+    const session = Store.data.voiceSessions.find(s => s.id === id);
+    if (session && session.hasRecording) loadRecordingIntoPlayer(session.id);
+  }
 }
 
 /* ─── Boot ──────────────────────────────────────────────────── */
@@ -3018,6 +3181,15 @@ function render() {
   link.href = LOGO_URI;
   document.head.appendChild(link);
 })();
+// Chrome loads its voice list asynchronously — calling getVoices() before
+// the browser fires voiceschanged returns an empty array every time, which
+// is why a voice call started right after page load can silently pick no
+// voice. Priming it here (and again on the event) means Voice Training's
+// getVoices() call has real data by the time anyone starts a call.
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener('voiceschanged', () => window.speechSynthesis.getVoices());
+}
 Store.load();
 Router.parse();
 window.addEventListener('hashchange', () => { Router.parse(); render(); });
@@ -3043,6 +3215,10 @@ window.startVoiceCall = startVoiceCall;
 window.startListening = startListening;
 window.stopListening = stopListening;
 window.interruptBuyer = interruptBuyer;
+window.showRecordingConsent = showRecordingConsent;
+window.startRecording = startRecording;
+window.stopRecording = stopRecording;
+window.deleteRecording = deleteRecording;
 window.showTypeFallback = showTypeFallback;
 window.sendTyped = sendTyped;
 window.endVoiceCall = endVoiceCall;
